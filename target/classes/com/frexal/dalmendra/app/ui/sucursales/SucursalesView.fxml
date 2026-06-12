@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ColorPicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Rectangle?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane xmlns="http://javafx.com/javafx/13"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.frexal.dalmendra.app.ui.sucursales.SucursalesController"
+            prefWidth="980.0"
+            prefHeight="510.0"
+            minWidth="980.0"
+            minHeight="510.0"
+            maxWidth="980.0"
+            maxHeight="510.0"
+            style="-fx-background-color: #f0f0f0;">
+
+    <children>
+        <ToolBar layoutX="0.0"
+                 layoutY="0.0"
+                 prefWidth="980.0"
+                 prefHeight="32.0">
+            <items>
+                <Button fx:id="btnNuevo" text="Nuevo" onAction="#onNuevo" prefWidth="65.0"/>
+                <Button fx:id="btnEditar" text="Editar" onAction="#onEditar" prefWidth="65.0" disable="true"/>
+                <Button fx:id="btnGuardar" text="Guardar" onAction="#onGuardar" prefWidth="75.0" disable="true"/>
+                <Button fx:id="btnEliminar" text="Eliminar" onAction="#onEliminar" prefWidth="75.0" disable="true"/>
+                <Button fx:id="btnCancelar" text="Cancelar" onAction="#onCancelar" prefWidth="80.0" disable="true"/>
+                <Button fx:id="btnTest" text="Probar" onAction="#onTest" prefWidth="70.0" disable="true"/>
+                <Button fx:id="btnOrdenar" text="Ordenar" onAction="#onOrdenar" prefWidth="75.0"/>
+                <Button fx:id="btnInicio" text="Inicio" onAction="#onInicio" prefWidth="65.0" disable="true"/>
+                <Button fx:id="btnSubir" text="Subir" onAction="#onSubir" prefWidth="65.0" disable="true"/>
+                <Button fx:id="btnBajar" text="Bajar" onAction="#onBajar" prefWidth="65.0" disable="true"/>
+                <Button fx:id="btnFinal" text="Final" onAction="#onFinal" prefWidth="65.0" disable="true"/>
+                <Button fx:id="btnCerrar" text="Cerrar" onAction="#onCerrar" prefWidth="70.0"/>
+            </items>
+        </ToolBar>
+
+        <AnchorPane layoutX="12.0"
+                    layoutY="40.0"
+                    prefWidth="956.0"
+                    prefHeight="378.0"
+                    style="-fx-background-color: white; -fx-border-color: #bcbcbc; -fx-border-width: 1;">
+            <children>
+                <Label layoutX="10.0"
+                       layoutY="6.0"
+                       text="Sucursales">
+                    <font>
+                        <Font size="12.0"/>
+                    </font>
+                </Label>
+
+                <VBox layoutX="12.0"
+                      layoutY="24.0"
+                      prefWidth="220.0"
+                      spacing="8.0">
+                    <children>
+                        <HBox spacing="6.0">
+                            <children>
+                                <Label text="ID:"/>
+                                <Label fx:id="lblId" text=""/>
+                            </children>
+                        </HBox>
+
+                        <VBox spacing="3.0">
+                            <children>
+                                <Label text="Nombre Sucursal"/>
+                                <TextField fx:id="txtNombreSucursal" disable="true" prefWidth="200.0"/>
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="3.0">
+                            <children>
+                                <Label text="Servidor"/>
+                                <TextField fx:id="txtServidor" disable="true" prefWidth="200.0"/>
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="3.0">
+                            <children>
+                                <Label text="Base de datos"/>
+                                <TextField fx:id="txtDB" disable="true" prefWidth="200.0"/>
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="3.0">
+                            <children>
+                                <Label text="Usuario"/>
+                                <TextField fx:id="txtUsuario" disable="true" prefWidth="200.0"/>
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="3.0">
+                            <children>
+                                <Label text="Contraseña"/>
+                                <PasswordField fx:id="txtContrasena" disable="true" prefWidth="200.0"/>
+                            </children>
+                        </VBox>
+
+                        <CheckBox fx:id="chkActiva"
+                                  text="Activa"
+                                  selected="true"
+                                  disable="true"/>
+
+                        <Label text="Color de sucursal"/>
+
+                        <HBox spacing="8.0">
+                            <children>
+                                <Rectangle fx:id="rectColor"
+                                           width="120.0"
+                                           height="24.0"
+                                           stroke="#808080"
+                                           fill="WHITE"/>
+
+                                <Button fx:id="btnColor"
+                                        text="Elegir color"
+                                        onAction="#onAbrirColorPicker"
+                                        disable="true"
+                                        prefWidth="105.0"/>
+
+                                <ColorPicker fx:id="colorPicker"
+                                             disable="true"
+                                             onAction="#onColorSelected"
+                                             value="WHITE"
+                                             opacity="0.0"
+                                             prefWidth="1.0"
+                                             prefHeight="1.0"
+                                             minWidth="1.0"
+                                             minHeight="1.0"
+                                             maxWidth="1.0"
+                                             maxHeight="1.0"/>
+                            </children>
+                        </HBox>
+
+                        <Label fx:id="lblColorValue"
+                               visible="false"
+                               managed="false"
+                               text=""/>
+
+                        <Button fx:id="btnMysql"
+                                text="MySQL Test"
+                                onAction="#onMysqlTest"
+                                prefWidth="100.0"/>
+                    </children>
+                    <padding>
+                        <Insets top="6.0" right="4.0" bottom="6.0" left="4.0"/>
+                    </padding>
+                </VBox>
+
+                <TableView fx:id="tblSucursales"
+                           layoutX="245.0"
+                           layoutY="18.0"
+                           prefWidth="695.0"
+                           prefHeight="440.0">
+                    <columns>
+                        <TableColumn fx:id="colId" text="ID" prefWidth="55.0"/>
+                        <TableColumn fx:id="colNombreSucursal" text="Nombre Sucursal" prefWidth="150.0"/>
+                        <TableColumn fx:id="colServidor" text="Servidor" prefWidth="145.0"/>
+                        <TableColumn fx:id="colDB" text="Base de datos" prefWidth="120.0"/>
+                        <TableColumn fx:id="colUsuario" text="Usuario" prefWidth="95.0"/>
+                        <TableColumn fx:id="colFechaActualizacion" text="Actualización" prefWidth="130.0"/>
+                    </columns>
+                </TableView>
+            </children>
+        </AnchorPane>
+    </children>
+</AnchorPane>

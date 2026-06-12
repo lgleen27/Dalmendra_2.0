@@ -21,6 +21,8 @@ public class AppState {
     private List<OrdenExistencia> ordenExistencias = new ArrayList<>();
     private List<String> erroresSincronizacion = new ArrayList<>();
 
+    private Sucursal sucursalSeleccionada;
+
     private boolean primeraEjecucion;
     private boolean hayErrorSincronizacion;
     private boolean estaAbiertoFrmListado;
@@ -34,6 +36,10 @@ public class AppState {
 
     public String getNombrePrograma() {
         return nombrePrograma;
+    }
+
+    public void setNombrePrograma(String nombrePrograma) {
+        this.nombrePrograma = nombrePrograma;
     }
 
     public List<Sucursal> getSucursales() {
@@ -50,6 +56,14 @@ public class AppState {
 
     public void setSucursalesActivas(List<Sucursal> sucursalesActivas) {
         this.sucursalesActivas = sucursalesActivas;
+    }
+
+    public Sucursal getSucursalSeleccionada() {
+        return sucursalSeleccionada;
+    }
+
+    public void setSucursalSeleccionada(Sucursal sucursalSeleccionada) {
+        this.sucursalSeleccionada = sucursalSeleccionada;
     }
 
     public List<Existencia> getExistencias() {
@@ -80,6 +94,10 @@ public class AppState {
         return erroresSincronizacion;
     }
 
+    public void setErroresSincronizacion(List<String> erroresSincronizacion) {
+        this.erroresSincronizacion = erroresSincronizacion;
+    }
+
     public void addErrorSincronizacion(String error) {
         this.erroresSincronizacion.add(error);
         this.hayErrorSincronizacion = true;
@@ -100,6 +118,10 @@ public class AppState {
 
     public boolean isHayErrorSincronizacion() {
         return hayErrorSincronizacion;
+    }
+
+    public void setHayErrorSincronizacion(boolean hayErrorSincronizacion) {
+        this.hayErrorSincronizacion = hayErrorSincronizacion;
     }
 
     public boolean isEstaAbiertoFrmListado() {
@@ -159,17 +181,17 @@ public class AppState {
     }
 
     public Optional<Configuracion> getConfiguracion(String descripcion) {
-    switch (descripcion) {
-        case "IdDbSelect":
-            return Optional.of(new Configuracion("IdDbSelect", idDbSelect));
-        case "TimeSyncSucursal":
-            return Optional.of(new Configuracion("TimeSyncSucursal", timeSyncSucursal));
-        case "TimeChangeSucursal":
-            return Optional.of(new Configuracion("TimeChangeSucursal", timeChangeSucursal));
-        case "FirstReport":
-            return Optional.of(new Configuracion("FirstReport", firstReport));
-        default:
-            return Optional.empty();
+        switch (descripcion) {
+            case "IdDbSelect":
+                return Optional.of(new Configuracion("IdDbSelect", idDbSelect));
+            case "TimeSyncSucursal":
+                return Optional.of(new Configuracion("TimeSyncSucursal", timeSyncSucursal));
+            case "TimeChangeSucursal":
+                return Optional.of(new Configuracion("TimeChangeSucursal", timeChangeSucursal));
+            case "FirstReport":
+                return Optional.of(new Configuracion("FirstReport", firstReport));
+            default:
+                return Optional.empty();
+        }
     }
-}
 }

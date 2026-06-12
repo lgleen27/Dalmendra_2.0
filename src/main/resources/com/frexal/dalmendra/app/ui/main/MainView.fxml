@@ -6,11 +6,14 @@
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.control.ComboBox?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17"
+<BorderPane xmlns="http://javafx.com/javafx/13"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.frexal.dalmendra.app.ui.main.MainController">
 
@@ -37,11 +40,13 @@
             </menus>
         </MenuBar>
     </top>
-
+    
     <center>
-        <StackPane fx:id="contentPane" style="-fx-background-color: white;">
+        <StackPane fx:id="pnlCentro" style="-fx-background-color: white;">
             <children>
-                <Label fx:id="lblVistaActual" text="Bienvenido a Dalmendra" style="-fx-font-size: 22px; -fx-text-fill: #333333;" />
+                <Label fx:id="lblVistaActual"
+                       text="Bienvenido a Dalmendra"
+                       style="-fx-font-size: 22px; -fx-text-fill: #333333;" />
             </children>
         </StackPane>
     </center>
@@ -52,8 +57,13 @@
                 <Insets top="8" right="12" bottom="8" left="12"/>
             </padding>
             <children>
+                <Label text="Sucursal:" />
+                <ComboBox fx:id="cmbSucursales" prefWidth="220.0" onAction="#onSucursalSeleccionada"/>
+
+                <Label text="|" />
                 <Label text="Estado:" />
                 <Label fx:id="lblEstado" text="Inicializando..." />
+
                 <Label text="|" />
                 <Label text="Sincronización:" />
                 <Label fx:id="lblSync" text="Sin iniciar" />

@@ -1,5 +1,6 @@
 package com.frexal.dalmendra.app.ui.main;
 
+import com.frexal.dalmendra.app.model.Sucursal;
 import com.frexal.dalmendra.app.repository.CategoriaRepository;
 import com.frexal.dalmendra.app.repository.ConfiguracionRepository;
 import com.frexal.dalmendra.app.repository.ExistenciaRepository;
@@ -12,16 +13,27 @@ import com.frexal.dalmendra.app.service.OrdenExistenciaService;
 import com.frexal.dalmendra.app.service.SqlServerSucursalClient;
 import com.frexal.dalmendra.app.service.SucursalService;
 import com.frexal.dalmendra.app.service.SyncSchedulerService;
+import com.frexal.dalmendra.app.ui.config.ConfiguracionController;
+import com.frexal.dalmendra.app.ui.sucursales.SucursalesController;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.util.StringConverter;
 
 public class MainController {
-
-    @FXML
-    private StackPane contentPane;
 
     @FXML
     private Label lblVistaActual;
@@ -31,6 +43,12 @@ public class MainController {
 
     @FXML
     private Label lblSync;
+
+    @FXML
+    private StackPane pnlCentro;
+
+    @FXML
+    private ComboBox<Sucursal> cmbSucursales;
 
     private final AppState appState = new AppState();
 
@@ -68,6 +86,9 @@ public class MainController {
             sucursalService.cargarSucursales();
             ordenExistenciaService.cargarOrdenes();
 
+            configurarComboSucursales();
+            cargarComboSucursales();
+            aplicarColorSucursalActual();
             definirTimerSync();
 
             if (!appState.getSucursales().isEmpty()) {
@@ -78,7 +99,10 @@ public class MainController {
                 abrirReporteInicial();
             } else {
                 lblVistaActual.setText("No hay sucursales activas. Abra el catálogo de sucursales.");
-                mostrarInformacion("Dalmendra", "No existe ninguna conexión con las sucursales, revisa las conexiones existentes o genera una nueva.");
+                mostrarInformacion(
+                        "Dalmendra",
+                        "No existe ninguna conexión con las sucursales, revisa las conexiones existentes o genera una nueva."
+                );
             }
 
             lblEstado.setText("Sistema listo");
@@ -88,8 +112,63 @@ public class MainController {
         }
     }
 
+    private void configurarComboSucursales() {
+        cmbSucursales.setConverter(new StringConverter<Sucursal>() {
+            @Override
+            public String toString(Sucursal sucursal) {
+                return sucursal != null ? sucursal.getNombreSucursal() : "";
+            }
+
+            @Override
+            public Sucursal fromString(String string) {
+                return null;
+            }
+        });
+    }
+
+    private void cargarComboSucursales() {
+        cmbSucursales.getItems().clear();
+        cmbSucursales.getItems().addAll(appState.getSucursalesActivas());
+
+        Sucursal seleccionada = appState.getSucursalSeleccionada();
+
+        if (seleccionada != null && seleccionada.getId() != null) {
+            for (Sucursal sucursal : cmbSucursales.getItems()) {
+                if (sucursal.getId() != null && sucursal.getId().equals(seleccionada.getId())) {
+                    cmbSucursales.getSelectionModel().select(sucursal);
+                    return;
+                }
+            }
+        }
+
+        if (!cmbSucursales.getItems().isEmpty()) {
+            cmbSucursales.getSelectionModel().selectFirst();
+            appState.setSucursalSeleccionada(cmbSucursales.getSelectionModel().getSelectedItem());
+        }
+    }
+
+    @FXML
+    private void onSucursalSeleccionada() {
+        Sucursal sucursal = cmbSucursales.getSelectionModel().getSelectedItem();
+        appState.setSucursalSeleccionada(sucursal);
+        aplicarColorSucursalActual();
+
+        if (sucursal != null) {
+            lblEstado.setText("Sucursal activa: " + sucursal.getNombreSucursal());
+        } else {
+            lblEstado.setText("Sin sucursal seleccionada");
+        }
+    }
+
     private void abrirReporteInicial() {
-        switch (appState.getFirstReport()) {
+        String reporte = appState.getFirstReport();
+
+        if (reporte == null || reporte.trim().isEmpty()) {
+            abrirVistaPorCategorias();
+            return;
+        }
+
+        switch (reporte) {
             case "PorCategorias":
                 abrirVistaPorCategorias();
                 break;
@@ -115,8 +194,10 @@ public class MainController {
             Platform.runLater(() -> {
                 if (appState.isHayErrorSincronizacion()) {
                     lblSync.setText("Con errores");
-                    mostrarError("Errores de sincronización",
-                            String.join("\n", appState.getErroresSincronizacion()));
+                    mostrarError(
+                            "Errores de sincronización",
+                            String.join("\n", appState.getErroresSincronizacion())
+                    );
                 } else {
                     lblSync.setText("Correcta");
                 }
@@ -129,13 +210,20 @@ public class MainController {
     }
 
     private void definirTimerSync() {
-        int minutos = Integer.parseInt(appState.getTimeSyncSucursal());
+        try {
+            int minutos = Integer.parseInt(appState.getTimeSyncSucursal());
 
-        if (minutos > 0) {
-            syncSchedulerService.programarSincronizacion(() -> Platform.runLater(this::actualizarExistencias), minutos);
-            lblSync.setText("Programada cada " + minutos + " min");
-        } else {
-            lblSync.setText("Desactivada");
+            if (minutos > 0) {
+                syncSchedulerService.programarSincronizacion(
+                        () -> Platform.runLater(this::actualizarExistencias),
+                        minutos
+                );
+                lblSync.setText("Programada cada " + minutos + " min");
+            } else {
+                lblSync.setText("Desactivada");
+            }
+        } catch (Exception ex) {
+            lblSync.setText("Configuración inválida");
         }
     }
 
@@ -186,14 +274,58 @@ public class MainController {
 
     @FXML
     private void onSucursales() {
-        lblVistaActual.setText("Vista: Catálogo de Sucursales");
-        lblEstado.setText("Abriendo sucursales");
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/frexal/dalmendra/app/ui/sucursales/SucursalesView.fxml")
+            );
+
+            Parent view = loader.load();
+
+            SucursalesController controller = loader.getController();
+            controller.initData(sucursalService, appState);
+
+            Stage stage = new Stage();
+            stage.setTitle("Sucursales");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(lblEstado.getScene().getWindow());
+            stage.setResizable(false);
+            stage.setScene(new Scene(view));
+            stage.sizeToScene();
+            stage.centerOnScreen();
+            stage.showAndWait();
+
+            sucursalService.cargarSucursales();
+            cargarComboSucursales();
+            aplicarColorSucursalActual();
+            lblEstado.setText("Catálogo de sucursales cerrado");
+        } catch (Exception ex) {
+            mostrarError("Error", "No se pudo abrir el catálogo de sucursales: " + ex.getMessage());
+        }
     }
 
     @FXML
     private void onCategorias() {
-        lblVistaActual.setText("Vista: Catálogo de Categorias");
-        lblEstado.setText("Abriendo categorias");
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/frexal/dalmendra/app/ui/categorias/CategoriasView.fxml")
+            );
+
+            Parent view = loader.load();
+
+            Stage stage = new Stage();
+            stage.setTitle("Categorías");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(lblEstado.getScene().getWindow());
+            stage.setResizable(false);
+            stage.setScene(new Scene(view));
+            stage.sizeToScene();
+            stage.centerOnScreen();
+            stage.showAndWait();
+
+            lblEstado.setText("Catálogo de categorías cerrado");
+        } catch (Exception ex) {
+            mostrarError("Error", "No se pudo abrir el catálogo de categorías: " + ex.getMessage());
+        }
     }
 
     @FXML
@@ -204,8 +336,76 @@ public class MainController {
 
     @FXML
     private void onConfiguracion() {
-        lblVistaActual.setText("Vista: Configuración");
-        lblEstado.setText("Abriendo configuración");
+        abrirVistaConfiguracion();
+    }
+
+    private void abrirVistaConfiguracion() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/frexal/dalmendra/app/ui/config/ConfiguracionView.fxml")
+            );
+
+            Parent view = loader.load();
+
+            ConfiguracionController controller = loader.getController();
+            controller.initData(configuracionService, appState, () -> {
+                definirTimerSync();
+                lblEstado.setText("Configuración actualizada");
+                lblSync.setText("Configuración guardada");
+            });
+
+            Stage stage = new Stage();
+            stage.setTitle("Configuración");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(lblEstado.getScene().getWindow());
+            stage.setResizable(false);
+
+            Scene scene = new Scene(view);
+            stage.setScene(scene);
+            stage.sizeToScene();
+            stage.centerOnScreen();
+            stage.showAndWait();
+
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            mostrarError("Error", "No se pudo abrir la configuración: " + ex.getMessage());
+        }
+    }
+
+    private void aplicarColorSucursalActual() {
+        aplicarColorSucursal(appState.getSucursalSeleccionada());
+    }
+
+    private void aplicarColorSucursal(Sucursal sucursal) {
+        Color colorBase = Color.WHITE;
+
+        if (sucursal != null && sucursal.getColor() != null && !sucursal.getColor().trim().isEmpty()) {
+            try {
+                colorBase = Color.web(normalizarColorSucursal(sucursal.getColor().trim()));
+            } catch (Exception ex) {
+                colorBase = Color.WHITE;
+            }
+        }
+
+        Color colorSuave = colorBase.deriveColor(0, 1, 1, 0.28);
+
+        pnlCentro.setBackground(new Background(
+                new BackgroundFill(colorSuave, CornerRadii.EMPTY, Insets.EMPTY)
+        ));
+    }
+
+    private String normalizarColorSucursal(String color) {
+        String value = color.trim();
+
+        if (value.startsWith("#")) {
+            return value;
+        }
+
+        if (value.matches("[0-9A-Fa-f]{6}")) {
+            return "#" + value;
+        }
+
+        return "#FFFFFF";
     }
 
     private void mostrarInformacion(String titulo, String mensaje) {

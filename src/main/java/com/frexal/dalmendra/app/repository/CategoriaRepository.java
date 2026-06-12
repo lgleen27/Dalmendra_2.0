@@ -82,6 +82,17 @@ public class CategoriaRepository {
             ps.executeUpdate();
         }
     }
+    
+    public void updateOrden(Long id, Integer orden) throws SQLException {
+        String sql = "UPDATE categorias SET orden = ? WHERE id = ?";
+
+        try (Connection cn = MySqlConnectionFactory.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, orden);
+            ps.setLong(2, id);
+            ps.executeUpdate();
+        }
+    }
 
     private Categoria map(ResultSet rs) throws SQLException {
         Categoria c = new Categoria();

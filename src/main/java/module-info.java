@@ -6,6 +6,9 @@ module com.frexal.dalmendra.DalmendraApplication {
     opens com.frexal.dalmendra.app to javafx.fxml;
     opens com.frexal.dalmendra.app.model to javafx.base;
     opens com.frexal.dalmendra.app.ui.main to javafx.fxml;
+    opens com.frexal.dalmendra.app.ui.config to javafx.fxml;
+    opens com.frexal.dalmendra.app.ui.categorias to javafx.fxml;
+    opens com.frexal.dalmendra.app.ui.sucursales to javafx.fxml;
     
     exports com.frexal.dalmendra.app;
     exports com.frexal.dalmendra.app.model;
