@@ -1,24 +1,26 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frexal.dalmendra.app.repository;
 
 import com.frexal.dalmendra.app.config.MySqlConnectionFactory;
 import com.frexal.dalmendra.app.model.Existencia;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ExistenciaRepository {
 
     public List<Existencia> findBySucursalId(Long sucursalId) throws SQLException {
-        String sql = "SELECT * FROM existencias WHERE sucursal_id = ? ORDER BY orden ASC";
+        String sql = "SELECT * FROM existencias WHERE sucursal_id = ? ORDER BY orden ASC, codigo ASC";
         List<Existencia> items = new ArrayList<>();
 
         try (Connection cn = MySqlConnectionFactory.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, sucursalId);
 
             try (ResultSet rs = ps.executeQuery()) {
@@ -36,6 +38,7 @@ public class ExistenciaRepository {
 
         try (Connection cn = MySqlConnectionFactory.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
+
             ps.setLong(1, sucursalId);
             ps.setString(2, codigo);
 
@@ -57,11 +60,10 @@ public class ExistenciaRepository {
     }
 
     public Existencia insert(Existencia existencia) throws SQLException {
-        String sql = 
-            "INSERT INTO existencias"
-            + "(sucursal_id, codigo, descripcion, existencia, orden, fecha_actualizacion)"
-            + "VALUES (?, ?, ?, ?, ?, ?)"
-        ;
+        String sql =
+                "INSERT INTO existencias " +
+                "(sucursal_id, codigo, descripcion, existencia, orden, fecha_actualizacion) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection cn = MySqlConnectionFactory.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -70,7 +72,13 @@ public class ExistenciaRepository {
             ps.setString(2, existencia.getCodigo());
             ps.setString(3, existencia.getDescripcion());
             ps.setBigDecimal(4, existencia.getExistencia());
-            ps.setInt(5, existencia.getOrden() == null ? 0 : existencia.getOrden());
+
+            if (existencia.getOrden() != null) {
+                ps.setInt(5, existencia.getOrden());
+            } else {
+                ps.setNull(5, java.sql.Types.INTEGER);
+            }
+
             if (existencia.getFechaActualizacion() != null) {
                 ps.setTimestamp(6, Timestamp.valueOf(existencia.getFechaActualizacion()));
             } else {
@@ -90,24 +98,37 @@ public class ExistenciaRepository {
     }
 
     public Existencia update(Existencia existencia) throws SQLException {
-        String sql = 
-            "UPDATE existencias"
-            + "SET descripcion = ?, existencia = ?, orden = ?, fecha_actualizacion = ?"
-            + "WHERE id = ?"
-        ;
+        String sql =
+                "UPDATE existencias SET " +
+                "sucursal_id = ?, " +
+                "codigo = ?, " +
+                "descripcion = ?, " +
+                "existencia = ?, " +
+                "orden = ?, " +
+                "fecha_actualizacion = ? " +
+                "WHERE id = ?";
 
         try (Connection cn = MySqlConnectionFactory.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
-            ps.setString(1, existencia.getDescripcion());
-            ps.setBigDecimal(2, existencia.getExistencia());
-            ps.setInt(3, existencia.getOrden() == null ? 0 : existencia.getOrden());
-            if (existencia.getFechaActualizacion() != null) {
-                ps.setTimestamp(4, Timestamp.valueOf(existencia.getFechaActualizacion()));
+            ps.setLong(1, existencia.getSucursalId());
+            ps.setString(2, existencia.getCodigo());
+            ps.setString(3, existencia.getDescripcion());
+            ps.setBigDecimal(4, existencia.getExistencia());
+
+            if (existencia.getOrden() != null) {
+                ps.setInt(5, existencia.getOrden());
             } else {
-                ps.setTimestamp(4, null);
+                ps.setNull(5, java.sql.Types.INTEGER);
             }
-            ps.setLong(5, existencia.getId());
+
+            if (existencia.getFechaActualizacion() != null) {
+                ps.setTimestamp(6, Timestamp.valueOf(existencia.getFechaActualizacion()));
+            } else {
+                ps.setTimestamp(6, null);
+            }
+
+            ps.setLong(7, existencia.getId());
             ps.executeUpdate();
         }
 
@@ -126,14 +147,23 @@ public class ExistenciaRepository {
 
     private Existencia map(ResultSet rs) throws SQLException {
         Existencia e = new Existencia();
-        e.setId(rs.getLong("id"));
-        e.setSucursalId(rs.getLong("sucursal_id"));
+
+        long id = rs.getLong("id");
+        e.setId(rs.wasNull() ? null : id);
+
+        long sucursalId = rs.getLong("sucursal_id");
+        e.setSucursalId(rs.wasNull() ? null : sucursalId);
+
         e.setCodigo(rs.getString("codigo"));
         e.setDescripcion(rs.getString("descripcion"));
         e.setExistencia(rs.getBigDecimal("existencia"));
-        e.setOrden(rs.getInt("orden"));
+
+        int orden = rs.getInt("orden");
+        e.setOrden(rs.wasNull() ? null : orden);
+
         Timestamp ts = rs.getTimestamp("fecha_actualizacion");
         e.setFechaActualizacion(ts != null ? ts.toLocalDateTime() : null);
+
         return e;
     }
 }

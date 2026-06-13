@@ -2,6 +2,7 @@ package com.frexal.dalmendra.app.ui.sucursales;
 
 import com.frexal.dalmendra.app.model.Sucursal;
 import com.frexal.dalmendra.app.service.AppState;
+import com.frexal.dalmendra.app.service.SqlServerSucursalClient;
 import com.frexal.dalmendra.app.service.SucursalService;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -277,8 +278,8 @@ public class SucursalesController {
 
     @FXML
     private void onNuevo() {
-        habilitarCampos();
         limpiarCampos();
+        habilitarCampos();
         status = "1";
     }
 
@@ -472,30 +473,73 @@ public class SucursalesController {
 
     @FXML
     private void onTest() {
-        String servidor = txtServidor.getText().trim();
-        String db = txtDB.getText().trim();
-        String usuario = txtUsuario.getText().trim();
-        String password = txtContrasena.getText();
+        Sucursal sucursal;
 
-        if ("0".equals(status)) {
-            Sucursal seleccionada = tblSucursales.getSelectionModel().getSelectedItem();
-            if (seleccionada == null) {
-                mostrarError("Sucursales", "No se encontró la sucursal seleccionada.");
-                return;
+        try {
+            if ("0".equals(status)) {
+                sucursal = tblSucursales.getSelectionModel().getSelectedItem();
+
+                if (sucursal == null) {
+                    mostrarError("Sucursales", "No se encontró la sucursal seleccionada.");
+                    return;
+                }
+            } else {
+                if (isBlank(txtServidor.getText())
+                        || isBlank(txtDB.getText())
+                        || isBlank(txtUsuario.getText())
+                        || isBlank(txtContrasena.getText())) {
+                    mostrarError(
+                            "Probar conexión",
+                            "Debes capturar servidor, base de datos, usuario y contraseña para probar la conexión."
+                    );
+                    return;
+                }
+
+                sucursal = construirSucursalDesdeFormulario();
             }
-            servidor = safe(seleccionada.getDataSource());
-            db = safe(seleccionada.getCatalog());
-            usuario = safe(seleccionada.getUserId());
-            password = safe(seleccionada.getPassword());
-        }
 
-        boolean ok = probarConexionBasica(servidor);
-        if (ok) {
-            mostrarInformacion("Probar conexión",
-                    "Conexión básica exitosa.\nServidor: " + servidor + "\nBase de datos: " + db + "\nUsuario: " + usuario);
-        } else {
-            mostrarError("Probar conexión",
-                    "No se pudo establecer conexión básica con el servidor: " + servidor);
+            btnTest.setDisable(true);
+
+            Sucursal sucursalFinal = sucursal;
+
+            Thread thread = new Thread(() -> {
+                try {
+                    SqlServerSucursalClient client = new SqlServerSucursalClient();
+                    client.validarConexionOrThrow(sucursalFinal);
+
+                    Platform.runLater(() -> {
+                        btnTest.setDisable(false);
+                        mostrarInformacion(
+                                "Probar conexión",
+                                "Conexión SQL Server correcta."
+                                        + "\nSucursal: " + safe(sucursalFinal.getNombreSucursal())
+                                        + "\nServidor: " + safe(sucursalFinal.getDataSource())
+                                        + "\nBase de datos: " + safe(sucursalFinal.getCatalog())
+                                        + "\nUsuario: " + safe(sucursalFinal.getUserId())
+                        );
+                    });
+
+                } catch (Exception ex) {
+                    Platform.runLater(() -> {
+                        btnTest.setDisable(false);
+                        mostrarError(
+                                "Probar conexión",
+                                "No se pudo conectar a SQL Server."
+                                        + "\nSucursal: " + safe(sucursalFinal.getNombreSucursal())
+                                        + "\nServidor: " + safe(sucursalFinal.getDataSource())
+                                        + "\nBase de datos: " + safe(sucursalFinal.getCatalog())
+                                        + "\nDetalle: " + ex.getMessage()
+                        );
+                    });
+                }
+            });
+
+            thread.setDaemon(true);
+            thread.start();
+
+        } catch (Exception ex) {
+            btnTest.setDisable(false);
+            mostrarError("Probar conexión", "No se pudo preparar la prueba: " + ex.getMessage());
         }
     }
 
@@ -503,9 +547,9 @@ public class SucursalesController {
     private void onMysqlTest() {
         boolean ok = probarConexionBasica("127.0.0.1");
         if (ok) {
-            mostrarInformacion("MySQL Test", "Se detectó respuesta básica del puerto MySQL en localhost.");
+            mostrarInformacion("MySQL Local", "Se detectó respuesta básica del puerto MySQL en localhost.");
         } else {
-            mostrarError("MySQL Test", "No hubo respuesta de MySQL en localhost:3306.");
+            mostrarError("MySQL Local", "No hubo respuesta de MySQL en localhost:3306.");
         }
     }
 

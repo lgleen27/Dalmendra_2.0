@@ -7,6 +7,7 @@ import com.frexal.dalmendra.app.model.OrdenExistencia;
 import com.frexal.dalmendra.app.model.Sucursal;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,12 +15,12 @@ public class AppState {
 
     private String nombrePrograma = "Dalmendra";
 
-    private List<Sucursal> sucursales = new ArrayList<>();
-    private List<Sucursal> sucursalesActivas = new ArrayList<>();
-    private List<Existencia> existencias = new ArrayList<>();
-    private List<Categoria> categorias = new ArrayList<>();
-    private List<OrdenExistencia> ordenExistencias = new ArrayList<>();
-    private List<String> erroresSincronizacion = new ArrayList<>();
+    private final List<Sucursal> sucursales = new ArrayList<>();
+    private final List<Sucursal> sucursalesActivas = new ArrayList<>();
+    private final List<Existencia> existencias = new ArrayList<>();
+    private final List<Categoria> categorias = new ArrayList<>();
+    private final List<OrdenExistencia> ordenExistencias = new ArrayList<>();
+    private final List<String> erroresSincronizacion = new ArrayList<>();
 
     private Sucursal sucursalSeleccionada;
 
@@ -43,19 +44,32 @@ public class AppState {
     }
 
     public List<Sucursal> getSucursales() {
-        return sucursales;
+        return Collections.unmodifiableList(sucursales);
     }
 
     public void setSucursales(List<Sucursal> sucursales) {
-        this.sucursales = sucursales;
+        this.sucursales.clear();
+
+        if (sucursales != null) {
+            this.sucursales.addAll(sucursales);
+        }
+
+        recalcularSucursalesActivas();
+        validarSucursalSeleccionada();
     }
 
     public List<Sucursal> getSucursalesActivas() {
-        return sucursalesActivas;
+        return Collections.unmodifiableList(sucursalesActivas);
     }
 
     public void setSucursalesActivas(List<Sucursal> sucursalesActivas) {
-        this.sucursalesActivas = sucursalesActivas;
+        this.sucursalesActivas.clear();
+
+        if (sucursalesActivas != null) {
+            this.sucursalesActivas.addAll(sucursalesActivas);
+        }
+
+        validarSucursalSeleccionada();
     }
 
     public Sucursal getSucursalSeleccionada() {
@@ -63,44 +77,83 @@ public class AppState {
     }
 
     public void setSucursalSeleccionada(Sucursal sucursalSeleccionada) {
-        this.sucursalSeleccionada = sucursalSeleccionada;
+        if (sucursalSeleccionada == null) {
+            this.sucursalSeleccionada = null;
+            return;
+        }
+
+        for (Sucursal sucursal : sucursalesActivas) {
+            if (mismaSucursal(sucursal, sucursalSeleccionada)) {
+                this.sucursalSeleccionada = sucursal;
+                return;
+            }
+        }
+
+        for (Sucursal sucursal : sucursales) {
+            if (mismaSucursal(sucursal, sucursalSeleccionada)) {
+                this.sucursalSeleccionada = sucursal;
+                return;
+            }
+        }
+
+        this.sucursalSeleccionada = null;
     }
 
     public List<Existencia> getExistencias() {
-        return existencias;
+        return Collections.unmodifiableList(existencias);
     }
 
     public void setExistencias(List<Existencia> existencias) {
-        this.existencias = existencias;
+        this.existencias.clear();
+
+        if (existencias != null) {
+            this.existencias.addAll(existencias);
+        }
     }
 
     public List<Categoria> getCategorias() {
-        return categorias;
+        return Collections.unmodifiableList(categorias);
     }
 
     public void setCategorias(List<Categoria> categorias) {
-        this.categorias = categorias;
+        this.categorias.clear();
+
+        if (categorias != null) {
+            this.categorias.addAll(categorias);
+        }
     }
 
     public List<OrdenExistencia> getOrdenExistencias() {
-        return ordenExistencias;
+        return Collections.unmodifiableList(ordenExistencias);
     }
 
     public void setOrdenExistencias(List<OrdenExistencia> ordenExistencias) {
-        this.ordenExistencias = ordenExistencias;
+        this.ordenExistencias.clear();
+
+        if (ordenExistencias != null) {
+            this.ordenExistencias.addAll(ordenExistencias);
+        }
     }
 
     public List<String> getErroresSincronizacion() {
-        return erroresSincronizacion;
+        return Collections.unmodifiableList(erroresSincronizacion);
     }
 
     public void setErroresSincronizacion(List<String> erroresSincronizacion) {
-        this.erroresSincronizacion = erroresSincronizacion;
+        this.erroresSincronizacion.clear();
+
+        if (erroresSincronizacion != null) {
+            this.erroresSincronizacion.addAll(erroresSincronizacion);
+        }
+
+        this.hayErrorSincronizacion = !this.erroresSincronizacion.isEmpty();
     }
 
     public void addErrorSincronizacion(String error) {
-        this.erroresSincronizacion.add(error);
-        this.hayErrorSincronizacion = true;
+        if (error != null && !error.trim().isEmpty()) {
+            this.erroresSincronizacion.add(error.trim());
+            this.hayErrorSincronizacion = true;
+        }
     }
 
     public void clearErroresSincronizacion() {
@@ -193,5 +246,49 @@ public class AppState {
             default:
                 return Optional.empty();
         }
+    }
+
+    private void recalcularSucursalesActivas() {
+        sucursalesActivas.clear();
+
+        for (Sucursal sucursal : sucursales) {
+            if (sucursal != null && Boolean.TRUE.equals(sucursal.getActiva())) {
+                sucursalesActivas.add(sucursal);
+            }
+        }
+    }
+
+    private void validarSucursalSeleccionada() {
+        if (sucursalSeleccionada == null) {
+            if (!sucursalesActivas.isEmpty()) {
+                sucursalSeleccionada = sucursalesActivas.get(0);
+            }
+            return;
+        }
+
+        for (Sucursal sucursal : sucursalesActivas) {
+            if (mismaSucursal(sucursal, sucursalSeleccionada)) {
+                sucursalSeleccionada = sucursal;
+                return;
+            }
+        }
+
+        if (!sucursalesActivas.isEmpty()) {
+            sucursalSeleccionada = sucursalesActivas.get(0);
+        } else {
+            sucursalSeleccionada = null;
+        }
+    }
+
+    private boolean mismaSucursal(Sucursal a, Sucursal b) {
+        if (a == null || b == null) {
+            return false;
+        }
+
+        if (a.getId() == null || b.getId() == null) {
+            return false;
+        }
+
+        return a.getId().equals(b.getId());
     }
 }

@@ -22,9 +22,11 @@ public class OrdenExistenciaService {
     }
 
     public int obtenerOrden(Long sucursalId, String codigo) throws SQLException {
+        validarDatos(sucursalId, codigo);
+
         OrdenExistencia existente = ordenRepository.findBySucursalIdAndCodigo(sucursalId, codigo);
 
-        if (existente != null) {
+        if (existente != null && existente.getOrden() != null) {
             return existente.getOrden();
         }
 
@@ -35,7 +37,18 @@ public class OrdenExistenciaService {
     }
 
     public void actualizarOrden(Long sucursalId, String codigo, int orden) throws SQLException {
+        validarDatos(sucursalId, codigo);
+
         ordenRepository.saveOrUpdate(new OrdenExistencia(sucursalId, codigo, orden));
         cargarOrdenes();
+    }
+
+    private void validarDatos(Long sucursalId, String codigo) {
+        if (sucursalId == null) {
+            throw new IllegalArgumentException("La sucursal es obligatoria.");
+        }
+        if (codigo == null || codigo.trim().isEmpty()) {
+            throw new IllegalArgumentException("El código es obligatorio.");
+        }
     }
 }

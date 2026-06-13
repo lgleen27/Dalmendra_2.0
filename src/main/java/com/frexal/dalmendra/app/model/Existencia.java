@@ -1,11 +1,8 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frexal.dalmendra.app.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class Existencia {
 
@@ -74,5 +71,27 @@ public class Existencia {
 
     public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
         this.fechaActualizacion = fechaActualizacion;
+    }
+
+    public BigDecimal getExistenciaOrZero() {
+        return existencia != null ? existencia : BigDecimal.ZERO;
+    }
+
+    @Override
+    public String toString() {
+        return (codigo == null ? "" : codigo) + " - " + (descripcion == null ? "" : descripcion);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Existencia)) return false;
+        Existencia that = (Existencia) o;
+        return id != null && that.id != null && Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : System.identityHashCode(this);
     }
 }

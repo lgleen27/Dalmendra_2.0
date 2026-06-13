@@ -1,5 +1,4 @@
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/model/Categoria.java
-/home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/ui/sucursales/SucursalesController.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/service/SqlServerSucursalClient.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/config/MySqlSchemaInitializer.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/model/OrdenExistencia.java
@@ -11,6 +10,7 @@
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/repository/ExistenciaRepository.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/repository/SucursalRepository.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/model/Configuracion.java
+/home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/ui/sucursal/SucursalesController.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/DalmendraApplication.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/service/OrdenExistenciaService.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/service/ConfiguracionService.java

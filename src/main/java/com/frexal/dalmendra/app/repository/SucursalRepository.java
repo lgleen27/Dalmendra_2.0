@@ -3,14 +3,19 @@ package com.frexal.dalmendra.app.repository;
 import com.frexal.dalmendra.app.config.MySqlConnectionFactory;
 import com.frexal.dalmendra.app.model.Sucursal;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SucursalRepository {
 
     public List<Sucursal> findAll() throws SQLException {
-        String sql = "SELECT * FROM sucursales ORDER BY orden ASC";
+        String sql = "SELECT * FROM sucursales ORDER BY orden ASC, nombre_sucursal ASC";
         List<Sucursal> items = new ArrayList<>();
 
         try (Connection cn = MySqlConnectionFactory.getConnection();
@@ -46,7 +51,12 @@ public class SucursalRepository {
             ps.setString(3, sucursal.getCatalog());
             ps.setString(4, sucursal.getUserId());
             ps.setString(5, sucursal.getPassword());
-            ps.setInt(6, sucursal.getOrden() == null ? 0 : sucursal.getOrden());
+
+            if (sucursal.getOrden() != null) {
+                ps.setInt(6, sucursal.getOrden());
+            } else {
+                ps.setNull(6, java.sql.Types.INTEGER);
+            }
 
             if (sucursal.getFechaHoraActualizacion() != null) {
                 ps.setTimestamp(7, Timestamp.valueOf(sucursal.getFechaHoraActualizacion()));
@@ -55,7 +65,12 @@ public class SucursalRepository {
             }
 
             ps.setString(8, sucursal.getColor());
-            ps.setBoolean(9, sucursal.getActiva() == null || sucursal.getActiva());
+
+            if (sucursal.getActiva() != null) {
+                ps.setBoolean(9, sucursal.getActiva());
+            } else {
+                ps.setNull(9, java.sql.Types.BOOLEAN);
+            }
 
             ps.executeUpdate();
 
@@ -91,7 +106,12 @@ public class SucursalRepository {
             ps.setString(3, sucursal.getCatalog());
             ps.setString(4, sucursal.getUserId());
             ps.setString(5, sucursal.getPassword());
-            ps.setInt(6, sucursal.getOrden() == null ? 0 : sucursal.getOrden());
+
+            if (sucursal.getOrden() != null) {
+                ps.setInt(6, sucursal.getOrden());
+            } else {
+                ps.setNull(6, java.sql.Types.INTEGER);
+            }
 
             if (sucursal.getFechaHoraActualizacion() != null) {
                 ps.setTimestamp(7, Timestamp.valueOf(sucursal.getFechaHoraActualizacion()));
@@ -100,7 +120,13 @@ public class SucursalRepository {
             }
 
             ps.setString(8, sucursal.getColor());
-            ps.setBoolean(9, sucursal.getActiva() == null || sucursal.getActiva());
+
+            if (sucursal.getActiva() != null) {
+                ps.setBoolean(9, sucursal.getActiva());
+            } else {
+                ps.setNull(9, java.sql.Types.BOOLEAN);
+            }
+
             ps.setLong(10, sucursal.getId());
 
             ps.executeUpdate();
@@ -129,7 +155,12 @@ public class SucursalRepository {
             ps.setString(2, sucursal.getDataSource());
             ps.setString(3, sucursal.getCatalog());
             ps.setString(4, sucursal.getUserId());
-            ps.setInt(5, sucursal.getOrden() == null ? 0 : sucursal.getOrden());
+
+            if (sucursal.getOrden() != null) {
+                ps.setInt(5, sucursal.getOrden());
+            } else {
+                ps.setNull(5, java.sql.Types.INTEGER);
+            }
 
             if (sucursal.getFechaHoraActualizacion() != null) {
                 ps.setTimestamp(6, Timestamp.valueOf(sucursal.getFechaHoraActualizacion()));
@@ -138,7 +169,13 @@ public class SucursalRepository {
             }
 
             ps.setString(7, sucursal.getColor());
-            ps.setBoolean(8, sucursal.getActiva() == null || sucursal.getActiva());
+
+            if (sucursal.getActiva() != null) {
+                ps.setBoolean(8, sucursal.getActiva());
+            } else {
+                ps.setNull(8, java.sql.Types.BOOLEAN);
+            }
+
             ps.setLong(9, sucursal.getId());
 
             ps.executeUpdate();
@@ -173,7 +210,11 @@ public class SucursalRepository {
 
         try (Connection cn = MySqlConnectionFactory.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
-            ps.setInt(1, orden);
+            if (orden != null) {
+                ps.setInt(1, orden);
+            } else {
+                ps.setNull(1, java.sql.Types.INTEGER);
+            }
             ps.setLong(2, id);
             ps.executeUpdate();
         }
@@ -181,19 +222,27 @@ public class SucursalRepository {
 
     private Sucursal map(ResultSet rs) throws SQLException {
         Sucursal s = new Sucursal();
-        s.setId(rs.getLong("id"));
+
+        long id = rs.getLong("id");
+        s.setId(rs.wasNull() ? null : id);
+
         s.setNombreSucursal(rs.getString("nombre_sucursal"));
         s.setDataSource(rs.getString("data_source"));
         s.setCatalog(rs.getString("catalog"));
         s.setUserId(rs.getString("user_id"));
         s.setPassword(rs.getString("password"));
-        s.setOrden(rs.getInt("orden"));
+
+        int orden = rs.getInt("orden");
+        s.setOrden(rs.wasNull() ? null : orden);
 
         Timestamp ts = rs.getTimestamp("fecha_hora_actualizacion");
         s.setFechaHoraActualizacion(ts != null ? ts.toLocalDateTime() : null);
 
         s.setColor(rs.getString("color"));
-        s.setActiva(rs.getBoolean("activa"));
+
+        boolean activa = rs.getBoolean("activa");
+        s.setActiva(rs.wasNull() ? null : activa);
+
         return s;
     }
 }

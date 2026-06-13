@@ -21,8 +21,14 @@ public class SucursalService {
     }
 
     public List<Sucursal> cargarSucursales() throws SQLException {
-        List<Sucursal> sucursales = sucursalRepository.findAll();
-        actualizarEstado(sucursales);
+        List<Sucursal> sucursales = sucursalRepository.findAll().stream()
+                .sorted(Comparator.comparing(
+                        Sucursal::getOrden,
+                        Comparator.nullsLast(Integer::compareTo)
+                ))
+                .collect(Collectors.toList());
+
+        appState.setSucursales(sucursales);
         return sucursales;
     }
 
@@ -113,43 +119,6 @@ public class SucursalService {
 
     public List<Sucursal> getSucursales() {
         return appState.getSucursales();
-    }
-
-    private void actualizarEstado(List<Sucursal> sucursales) {
-        appState.setSucursales(sucursales);
-
-        List<Sucursal> activas = sucursales.stream()
-                .filter(s -> s.getActiva() == null || s.getActiva())
-                .sorted(Comparator.comparing(Sucursal::getOrden, Comparator.nullsLast(Integer::compareTo)))
-                .collect(Collectors.toList());
-
-        appState.setSucursalesActivas(activas);
-
-        if (appState.getSucursalSeleccionada() != null && appState.getSucursalSeleccionada().getId() != null) {
-            Long idSeleccionado = appState.getSucursalSeleccionada().getId();
-
-            for (Sucursal sucursal : activas) {
-                if (sucursal.getId() != null && sucursal.getId().equals(idSeleccionado)) {
-                    appState.setSucursalSeleccionada(sucursal);
-                    return;
-                }
-            }
-
-            for (Sucursal sucursal : sucursales) {
-                if (sucursal.getId() != null && sucursal.getId().equals(idSeleccionado)) {
-                    appState.setSucursalSeleccionada(sucursal);
-                    return;
-                }
-            }
-        }
-
-        if (!activas.isEmpty()) {
-            appState.setSucursalSeleccionada(activas.get(0));
-        } else if (!sucursales.isEmpty()) {
-            appState.setSucursalSeleccionada(sucursales.get(0));
-        } else {
-            appState.setSucursalSeleccionada(null);
-        }
     }
 
     private void validar(Sucursal sucursal) {

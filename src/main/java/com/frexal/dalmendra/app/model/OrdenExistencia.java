@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frexal.dalmendra.app.model;
 
 public class OrdenExistencia {
@@ -50,5 +46,14 @@ public class OrdenExistencia {
 
     public void setOrden(Integer orden) {
         this.orden = orden;
+    }
+
+    @Override
+    public String toString() {
+        return "OrdenExistencia{id=" + id
+                + ", sucursalId=" + sucursalId
+                + ", codigo='" + codigo + '\''
+                + ", orden=" + orden
+                + '}';
     }
 }

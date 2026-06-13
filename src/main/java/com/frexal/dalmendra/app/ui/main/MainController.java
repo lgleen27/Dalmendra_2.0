@@ -24,9 +24,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
@@ -91,14 +94,12 @@ public class MainController {
             aplicarColorSucursalActual();
             definirTimerSync();
 
-            if (!appState.getSucursales().isEmpty()) {
-                actualizarExistencias();
-            }
-
             if (sucursalService.haySucursalesActivas()) {
+                actualizarExistencias();
                 abrirReporteInicial();
             } else {
                 lblVistaActual.setText("No hay sucursales activas. Abra el catálogo de sucursales.");
+                lblSync.setText("Sin sucursales activas");
                 mostrarInformacion(
                         "Dalmendra",
                         "No existe ninguna conexión con las sucursales, revisa las conexiones existentes o genera una nueva."
@@ -136,6 +137,8 @@ public class MainController {
             for (Sucursal sucursal : cmbSucursales.getItems()) {
                 if (sucursal.getId() != null && sucursal.getId().equals(seleccionada.getId())) {
                     cmbSucursales.getSelectionModel().select(sucursal);
+                    appState.setSucursalSeleccionada(sucursal);
+                    aplicarColorSucursal(sucursal);
                     return;
                 }
             }
@@ -144,6 +147,8 @@ public class MainController {
         if (!cmbSucursales.getItems().isEmpty()) {
             cmbSucursales.getSelectionModel().selectFirst();
             appState.setSucursalSeleccionada(cmbSucursales.getSelectionModel().getSelectedItem());
+        } else {
+            appState.setSucursalSeleccionada(null);
         }
     }
 
@@ -185,6 +190,12 @@ public class MainController {
     }
 
     private void actualizarExistencias() {
+        if (!sucursalService.haySucursalesActivas()) {
+            lblSync.setText("Sin sucursales activas");
+            lblEstado.setText("No hay sucursales activas para sincronizar");
+            return;
+        }
+
         lblSync.setText("Sincronizando...");
         lblEstado.setText("Actualizando existencias...");
 
@@ -194,14 +205,16 @@ public class MainController {
             Platform.runLater(() -> {
                 if (appState.isHayErrorSincronizacion()) {
                     lblSync.setText("Con errores");
-                    mostrarError(
-                            "Errores de sincronización",
-                            String.join("\n", appState.getErroresSincronizacion())
-                    );
+                    mostrarErroresSincronizacion(appState.getErroresSincronizacion());
                 } else {
                     lblSync.setText("Correcta");
                 }
-                lblEstado.setText("Existencias actualizadas");
+
+                if (appState.getSucursalSeleccionada() != null) {
+                    lblEstado.setText("Existencias actualizadas - " + appState.getSucursalSeleccionada().getNombreSucursal());
+                } else {
+                    lblEstado.setText("Existencias actualizadas");
+                }
             });
         });
 
@@ -367,7 +380,6 @@ public class MainController {
             stage.showAndWait();
 
         } catch (Exception ex) {
-            ex.printStackTrace();
             mostrarError("Error", "No se pudo abrir la configuración: " + ex.getMessage());
         }
     }
@@ -406,6 +418,30 @@ public class MainController {
         }
 
         return "#FFFFFF";
+    }
+
+    private void mostrarErroresSincronizacion(java.util.List<String> errores) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Errores de sincronización");
+        alert.setHeaderText("Se encontraron errores al sincronizar sucursales.");
+        alert.setContentText("Revise el detalle expandible.");
+
+        TextArea textArea = new TextArea(String.join("\n", errores));
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+
+        GridPane content = new GridPane();
+        content.setMaxWidth(Double.MAX_VALUE);
+        content.add(textArea, 0, 0);
+
+        alert.getDialogPane().setExpandableContent(content);
+        alert.getDialogPane().setExpanded(true);
+        alert.showAndWait();
     }
 
     private void mostrarInformacion(String titulo, String mensaje) {

@@ -1,10 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frexal.dalmendra.app.model;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 public class Sucursal {
 
@@ -100,5 +97,23 @@ public class Sucursal {
 
     public void setActiva(Boolean activa) {
         this.activa = activa;
+    }
+
+    @Override
+    public String toString() {
+        return nombreSucursal == null ? "" : nombreSucursal;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Sucursal)) return false;
+        Sucursal sucursal = (Sucursal) o;
+        return id != null && sucursal.id != null && Objects.equals(id, sucursal.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : System.identityHashCode(this);
     }
 }

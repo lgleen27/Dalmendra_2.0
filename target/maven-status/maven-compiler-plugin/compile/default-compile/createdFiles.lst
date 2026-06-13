@@ -1,6 +1,7 @@
 com/frexal/dalmendra/app/repository/CategoriaRepository.class
 com/frexal/dalmendra/app/service/SqlServerSucursalClient$VentaRemotaRow.class
 com/frexal/dalmendra/app/service/InventarioSyncService$ExistenciaTemporal.class
+com/frexal/dalmendra/app/service/SqlServerSucursalClient$SqlServerEndpoint.class
 com/frexal/dalmendra/app/ui/main/MainController.class
 com/frexal/dalmendra/app/service/InventarioSyncService.class
 com/frexal/dalmendra/app/service/AppState.class
