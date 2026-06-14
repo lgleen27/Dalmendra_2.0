@@ -27,6 +27,22 @@ public class CategoriaRepository {
         }
         return items;
     }
+    
+    public List<Categoria> findActivas() throws SQLException {
+        String sql = "SELECT * FROM categorias WHERE estado = 1 ORDER BY orden ASC, descripcion ASC";
+        List<Categoria> items = new ArrayList<>();
+
+        try (Connection cn = MySqlConnectionFactory.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                items.add(map(rs));
+            }
+        }
+
+        return items;
+    }
 
     public Categoria save(Categoria categoria) throws SQLException {
         if (categoria.getId() == null) {

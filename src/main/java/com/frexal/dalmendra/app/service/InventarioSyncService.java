@@ -1,31 +1,39 @@
 package com.frexal.dalmendra.app.service;
 
+import com.frexal.dalmendra.app.model.Categoria;
 import com.frexal.dalmendra.app.model.Existencia;
 import com.frexal.dalmendra.app.model.Sucursal;
+import com.frexal.dalmendra.app.repository.CategoriaRepository;
 import com.frexal.dalmendra.app.repository.ExistenciaRepository;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class InventarioSyncService {
 
     private final SqlServerSucursalClient sqlServerSucursalClient;
     private final ExistenciaRepository existenciaRepository;
+    private final CategoriaRepository categoriaRepository;
     private final SucursalService sucursalService;
     private final OrdenExistenciaService ordenExistenciaService;
     private final AppState appState;
 
     public InventarioSyncService(SqlServerSucursalClient sqlServerSucursalClient,
                                  ExistenciaRepository existenciaRepository,
+                                 CategoriaRepository categoriaRepository,
                                  SucursalService sucursalService,
                                  OrdenExistenciaService ordenExistenciaService,
                                  AppState appState) {
         this.sqlServerSucursalClient = sqlServerSucursalClient;
         this.existenciaRepository = existenciaRepository;
+        this.categoriaRepository = categoriaRepository;
         this.sucursalService = sucursalService;
         this.ordenExistenciaService = ordenExistenciaService;
         this.appState = appState;
@@ -45,8 +53,7 @@ public class InventarioSyncService {
 
             if (sucursal.getPassword() == null || sucursal.getPassword().isBlank()) {
                 appState.addErrorSincronizacion(
-                        "Sucursal " + safe(sucursal.getNombreSucursal())
-                                + ": no tiene contraseña configurada."
+                        "Sucursal " + safe(sucursal.getNombreSucursal()) + ": no tiene contraseña configurada."
                 );
                 continue;
             }
@@ -63,6 +70,12 @@ public class InventarioSyncService {
     }
 
     public void sincronizarSucursal(Sucursal sucursal) throws SQLException {
+        if (sucursal == null || sucursal.getId() == null) {
+            throw new IllegalArgumentException("La sucursal es obligatoria.");
+        }
+
+        List<Categoria> categoriasActivas = cargarCategoriasActivas();
+
         List<SqlServerSucursalClient.InventarioRemotoRow> inventario =
                 sqlServerSucursalClient.consultarInventario(sucursal);
 
@@ -72,30 +85,41 @@ public class InventarioSyncService {
         Map<String, ExistenciaTemporal> mapa = new LinkedHashMap<>();
 
         for (SqlServerSucursalClient.InventarioRemotoRow row : inventario) {
-            mapa.put(row.getCodigo(), new ExistenciaTemporal(
-                    row.getCodigo(),
-                    row.getDescripcion(),
+            if (isBlank(row.getCodigo())) {
+                continue;
+            }
+
+            String codigo = row.getCodigo().trim();
+
+            mapa.put(codigo, new ExistenciaTemporal(
+                    codigo,
+                    safe(row.getDescripcion()),
                     row.getExistencia() == null ? BigDecimal.ZERO : row.getExistencia()
             ));
         }
 
         for (SqlServerSucursalClient.VentaRemotaRow venta : ventas) {
-            ExistenciaTemporal actual = mapa.get(venta.getCodigo());
+            if (isBlank(venta.getCodigo())) {
+                continue;
+            }
+
+            String codigo = venta.getCodigo().trim();
+            BigDecimal vendida = venta.getExistenciaVendida() == null
+                    ? BigDecimal.ZERO
+                    : venta.getExistenciaVendida();
+
+            ExistenciaTemporal actual = mapa.get(codigo);
 
             if (actual != null) {
-                BigDecimal vendida = venta.getExistenciaVendida() == null
-                        ? BigDecimal.ZERO
-                        : venta.getExistenciaVendida();
-
                 actual.existencia = actual.existencia.subtract(vendida);
-            } else {
-                BigDecimal vendida = venta.getExistenciaVendida() == null
-                        ? BigDecimal.ZERO
-                        : venta.getExistenciaVendida();
 
-                mapa.put(venta.getCodigo(), new ExistenciaTemporal(
-                        venta.getCodigo(),
-                        venta.getDescripcion(),
+                if (isBlank(actual.descripcion) && !isBlank(venta.getDescripcion())) {
+                    actual.descripcion = venta.getDescripcion().trim();
+                }
+            } else {
+                mapa.put(codigo, new ExistenciaTemporal(
+                        codigo,
+                        safe(venta.getDescripcion()),
                         vendida.negate()
                 ));
             }
@@ -106,11 +130,16 @@ public class InventarioSyncService {
         LocalDateTime ahora = LocalDateTime.now();
 
         for (ExistenciaTemporal item : mapa.values()) {
+            if (isBlank(item.codigo)) {
+                continue;
+            }
+
             Existencia existencia = new Existencia();
             existencia.setSucursalId(sucursal.getId());
+            existencia.setCategoriaId(resolverCategoriaId(item.descripcion, categoriasActivas));
             existencia.setCodigo(item.codigo);
-            existencia.setDescripcion(item.descripcion);
-            existencia.setExistencia(item.existencia);
+            existencia.setDescripcion(safe(item.descripcion));
+            existencia.setExistencia(item.existencia == null ? BigDecimal.ZERO : item.existencia);
             existencia.setOrden(ordenExistenciaService.obtenerOrden(sucursal.getId(), item.codigo));
             existencia.setFechaActualizacion(ahora);
 
@@ -118,6 +147,68 @@ public class InventarioSyncService {
         }
 
         sucursalService.actualizarFechaActualizacion(sucursal.getId(), ahora);
+    }
+
+    private List<Categoria> cargarCategoriasActivas() throws SQLException {
+        List<Categoria> categorias = categoriaRepository.findAll();
+        List<Categoria> activas = new ArrayList<>();
+
+        for (Categoria categoria : categorias) {
+            if (categoria == null) {
+                continue;
+            }
+            if (Boolean.FALSE.equals(categoria.getEstado())) {
+                continue;
+            }
+            if (categoria.getId() == null) {
+                continue;
+            }
+
+            activas.add(categoria);
+        }
+
+        activas.sort(
+                Comparator.comparing(Categoria::getOrden, Comparator.nullsLast(Integer::compareTo))
+                        .thenComparing(c -> normalizarTexto(c.getDescripcion()))
+        );
+
+        return activas;
+    }
+
+    private Long resolverCategoriaId(String descripcion, List<Categoria> categoriasActivas) {
+        if (categoriasActivas == null || categoriasActivas.isEmpty()) {
+            return null;
+        }
+
+        String texto = normalizarTexto(descripcion);
+        if (texto.isEmpty()) {
+            return null;
+        }
+
+        Categoria mejorCoincidencia = null;
+        int mejorLongitudPalabra = -1;
+
+        for (Categoria categoria : categoriasActivas) {
+            String palabraClave = normalizarTexto(categoria.getPalabraClave());
+
+            if (palabraClave.isEmpty()) {
+                continue;
+            }
+
+            if (texto.contains(palabraClave) && palabraClave.length() > mejorLongitudPalabra) {
+                mejorCoincidencia = categoria;
+                mejorLongitudPalabra = palabraClave.length();
+            }
+        }
+
+        return mejorCoincidencia != null ? mejorCoincidencia.getId() : null;
+    }
+
+    private String normalizarTexto(String valor) {
+        if (valor == null) {
+            return "";
+        }
+        return valor.trim().toLowerCase(Locale.ROOT);
     }
 
     private String construirMensajeError(Exception ex) {
@@ -135,7 +226,6 @@ public class InventarioSyncService {
         if (mensaje == null || mensaje.trim().isEmpty()) {
             mensaje = ex.getMessage();
         }
-
         if (mensaje == null || mensaje.trim().isEmpty()) {
             mensaje = root.getClass().getSimpleName();
         }
@@ -145,7 +235,6 @@ public class InventarioSyncService {
 
     private String construirMensajeSql(SQLException ex) {
         StringBuilder sb = new StringBuilder();
-
         SQLException actual = ex;
         boolean primero = true;
 
@@ -190,9 +279,13 @@ public class InventarioSyncService {
         return value == null ? "" : value.trim();
     }
 
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
+    }
+
     private static class ExistenciaTemporal {
         private final String codigo;
-        private final String descripcion;
+        private String descripcion;
         private BigDecimal existencia;
 
         private ExistenciaTemporal(String codigo, String descripcion, BigDecimal existencia) {

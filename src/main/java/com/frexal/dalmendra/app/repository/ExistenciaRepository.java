@@ -33,6 +33,77 @@ public class ExistenciaRepository {
         return items;
     }
 
+    public List<Existencia> findBySucursalIdAndCategoriaId(Long sucursalId, Long categoriaId) throws SQLException {
+        String sql =
+                "SELECT * FROM existencias " +
+                "WHERE sucursal_id = ? AND categoria_id = ? " +
+                "ORDER BY orden ASC, codigo ASC";
+
+        List<Existencia> items = new ArrayList<>();
+
+        try (Connection cn = MySqlConnectionFactory.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, sucursalId);
+            ps.setLong(2, categoriaId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    items.add(map(rs));
+                }
+            }
+        }
+
+        return items;
+    }
+    
+    public List<Existencia> findBySucursalIdOrderByCategoriaYOrden(Long sucursalId) throws SQLException {
+        String sql =
+                "SELECT * FROM existencias " +
+                "WHERE sucursal_id = ? " +
+                "ORDER BY categoria_id ASC, orden ASC, codigo ASC";
+
+        List<Existencia> items = new ArrayList<>();
+
+        try (Connection cn = MySqlConnectionFactory.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, sucursalId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    items.add(map(rs));
+                }
+            }
+        }
+
+        return items;
+    }
+
+    public List<Existencia> findBySucursalIdAndCategoriaIdOrderByOrden(Long sucursalId, Long categoriaId) throws SQLException {
+        String sql =
+                "SELECT * FROM existencias " +
+                "WHERE sucursal_id = ? AND categoria_id = ? " +
+                "ORDER BY orden ASC, codigo ASC";
+
+        List<Existencia> items = new ArrayList<>();
+
+        try (Connection cn = MySqlConnectionFactory.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+
+            ps.setLong(1, sucursalId);
+            ps.setLong(2, categoriaId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    items.add(map(rs));
+                }
+            }
+        }
+
+        return items;
+    }
+
     public Existencia findBySucursalIdAndCodigo(Long sucursalId, String codigo) throws SQLException {
         String sql = "SELECT * FROM existencias WHERE sucursal_id = ? AND codigo = ?";
 
@@ -62,27 +133,34 @@ public class ExistenciaRepository {
     public Existencia insert(Existencia existencia) throws SQLException {
         String sql =
                 "INSERT INTO existencias " +
-                "(sucursal_id, codigo, descripcion, existencia, orden, fecha_actualizacion) " +
-                "VALUES (?, ?, ?, ?, ?, ?)";
+                "(sucursal_id, categoria_id, codigo, descripcion, existencia, orden, fecha_actualizacion) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection cn = MySqlConnectionFactory.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             ps.setLong(1, existencia.getSucursalId());
-            ps.setString(2, existencia.getCodigo());
-            ps.setString(3, existencia.getDescripcion());
-            ps.setBigDecimal(4, existencia.getExistencia());
+
+            if (existencia.getCategoriaId() != null) {
+                ps.setLong(2, existencia.getCategoriaId());
+            } else {
+                ps.setNull(2, java.sql.Types.BIGINT);
+            }
+
+            ps.setString(3, existencia.getCodigo());
+            ps.setString(4, existencia.getDescripcion());
+            ps.setBigDecimal(5, existencia.getExistencia());
 
             if (existencia.getOrden() != null) {
-                ps.setInt(5, existencia.getOrden());
+                ps.setInt(6, existencia.getOrden());
             } else {
-                ps.setNull(5, java.sql.Types.INTEGER);
+                ps.setNull(6, java.sql.Types.INTEGER);
             }
 
             if (existencia.getFechaActualizacion() != null) {
-                ps.setTimestamp(6, Timestamp.valueOf(existencia.getFechaActualizacion()));
+                ps.setTimestamp(7, Timestamp.valueOf(existencia.getFechaActualizacion()));
             } else {
-                ps.setTimestamp(6, null);
+                ps.setTimestamp(7, null);
             }
 
             ps.executeUpdate();
@@ -101,6 +179,7 @@ public class ExistenciaRepository {
         String sql =
                 "UPDATE existencias SET " +
                 "sucursal_id = ?, " +
+                "categoria_id = ?, " +
                 "codigo = ?, " +
                 "descripcion = ?, " +
                 "existencia = ?, " +
@@ -112,27 +191,45 @@ public class ExistenciaRepository {
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, existencia.getSucursalId());
-            ps.setString(2, existencia.getCodigo());
-            ps.setString(3, existencia.getDescripcion());
-            ps.setBigDecimal(4, existencia.getExistencia());
+
+            if (existencia.getCategoriaId() != null) {
+                ps.setLong(2, existencia.getCategoriaId());
+            } else {
+                ps.setNull(2, java.sql.Types.BIGINT);
+            }
+
+            ps.setString(3, existencia.getCodigo());
+            ps.setString(4, existencia.getDescripcion());
+            ps.setBigDecimal(5, existencia.getExistencia());
 
             if (existencia.getOrden() != null) {
-                ps.setInt(5, existencia.getOrden());
+                ps.setInt(6, existencia.getOrden());
             } else {
-                ps.setNull(5, java.sql.Types.INTEGER);
+                ps.setNull(6, java.sql.Types.INTEGER);
             }
 
             if (existencia.getFechaActualizacion() != null) {
-                ps.setTimestamp(6, Timestamp.valueOf(existencia.getFechaActualizacion()));
+                ps.setTimestamp(7, Timestamp.valueOf(existencia.getFechaActualizacion()));
             } else {
-                ps.setTimestamp(6, null);
+                ps.setTimestamp(7, null);
             }
 
-            ps.setLong(7, existencia.getId());
+            ps.setLong(8, existencia.getId());
             ps.executeUpdate();
         }
 
         return existencia;
+    }
+
+    public void updateOrden(Long id, Integer orden) throws SQLException {
+        String sql = "UPDATE existencias SET orden = ? WHERE id = ?";
+
+        try (Connection cn = MySqlConnectionFactory.getConnection();
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+            ps.setInt(1, orden);
+            ps.setLong(2, id);
+            ps.executeUpdate();
+        }
     }
 
     public void deleteBySucursalId(Long sucursalId) throws SQLException {
@@ -153,6 +250,9 @@ public class ExistenciaRepository {
 
         long sucursalId = rs.getLong("sucursal_id");
         e.setSucursalId(rs.wasNull() ? null : sucursalId);
+
+        long categoriaId = rs.getLong("categoria_id");
+        e.setCategoriaId(rs.wasNull() ? null : categoriaId);
 
         e.setCodigo(rs.getString("codigo"));
         e.setDescripcion(rs.getString("descripcion"));

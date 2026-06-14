@@ -14,15 +14,15 @@ import java.util.List;
 public class SqlServerSucursalClient {
 
     public boolean validarConexion(Sucursal sucursal) {
-        try (Connection cn = DriverManager.getConnection(buildConnectionString(sucursal))) {
+        try (Connection cn = openConnection(sucursal)) {
             return true;
         } catch (Exception ex) {
-            return false;
+            throw new RuntimeException("No fue posible conectar con la sucursal " + sucursal.getNombreSucursal() + ": " + ex.getMessage(), ex);
         }
     }
 
     public void validarConexionOrThrow(Sucursal sucursal) throws SQLException {
-        try (Connection cn = DriverManager.getConnection(buildConnectionString(sucursal))) {
+        try (Connection cn = openConnection(sucursal)) {
             // conexión correcta
         }
     }
@@ -36,7 +36,7 @@ public class SqlServerSucursalClient {
 
         List<InventarioRemotoRow> resultado = new ArrayList<>();
 
-        try (Connection cn = DriverManager.getConnection(buildConnectionString(sucursal));
+        try (Connection cn = openConnection(sucursal);
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -65,7 +65,7 @@ public class SqlServerSucursalClient {
 
         List<VentaRemotaRow> resultado = new ArrayList<>();
 
-        try (Connection cn = DriverManager.getConnection(buildConnectionString(sucursal));
+        try (Connection cn = openConnection(sucursal);
              PreparedStatement ps = cn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
 
@@ -81,9 +81,22 @@ public class SqlServerSucursalClient {
         return resultado;
     }
 
-    private String buildConnectionString(Sucursal sucursal) {
+    private Connection openConnection(Sucursal sucursal) throws SQLException {
         validarSucursal(sucursal);
 
+        try {
+            Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        } catch (ClassNotFoundException ex) {
+            throw new SQLException(
+                    "No se encontró el driver JDBC de SQL Server. Agrega la dependencia mssql-jdbc en Maven.",
+                    ex
+            );
+        }
+
+        return DriverManager.getConnection(buildConnectionString(sucursal));
+    }
+
+    private String buildConnectionString(Sucursal sucursal) {
         SqlServerEndpoint endpoint = parseDataSource(sucursal.getDataSource());
 
         StringBuilder sb = new StringBuilder("jdbc:sqlserver://");
@@ -189,7 +202,17 @@ public class SqlServerSucursalClient {
     }
 
     private String escapeProperty(String value) {
-        return value == null ? "" : value.trim().replace(";", "\\;");
+        if (value == null) {
+            return "";
+        }
+
+        String trimmed = value.trim();
+
+        if (trimmed.contains(";") || trimmed.contains("=") || trimmed.contains("[" ) || trimmed.contains("]") || trimmed.contains("{") || trimmed.contains("}")) {
+            return "{" + trimmed.replace("}", "}}") + "}";
+        }
+
+        return trimmed;
     }
 
     private String emptyToNull(String value) {

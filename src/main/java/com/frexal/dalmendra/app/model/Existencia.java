@@ -8,6 +8,7 @@ public class Existencia {
 
     private Long id;
     private Long sucursalId;
+    private Long categoriaId;
     private String codigo;
     private String descripcion;
     private BigDecimal existencia;
@@ -31,6 +32,14 @@ public class Existencia {
 
     public void setSucursalId(Long sucursalId) {
         this.sucursalId = sucursalId;
+    }
+
+    public Long getCategoriaId() {
+        return categoriaId;
+    }
+
+    public void setCategoriaId(Long categoriaId) {
+        this.categoriaId = categoriaId;
     }
 
     public String getCodigo() {
