@@ -67,6 +67,10 @@
                 <Label text="|" />
                 <Label text="Sincronización:" />
                 <Label fx:id="lblSync" text="Sin iniciar" />
+
+                <Label text="|" />
+                <Label text="Última correcta:" />
+                <Label fx:id="lblUltimaSync" text="Sin registros" />
             </children>
         </HBox>
     </bottom>

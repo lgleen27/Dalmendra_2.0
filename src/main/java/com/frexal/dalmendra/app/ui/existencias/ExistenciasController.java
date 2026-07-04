@@ -235,9 +235,16 @@ public class ExistenciasController {
             if (esCategoriaTodas(categoria)) {
                 registros = existenciaRepository.findBySucursalId(sucursal.getId());
             } else {
-                registros = existenciaRepository.findBySucursalIdAndCategoriaId(
+                String palabraClave = valor(categoria.getPalabraClave());
+
+                if (palabraClave.isEmpty()) {
+                    mostrarInformacion("Existencias", "La categoría seleccionada no tiene palabra clave configurada.");
+                    return;
+                }
+
+                registros = existenciaRepository.findBySucursalIdAndPalabraClave(
                         sucursal.getId(),
-                        categoria.getId()
+                        palabraClave
                 );
             }
 

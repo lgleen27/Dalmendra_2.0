@@ -32,11 +32,12 @@ public class ExistenciaRepository {
 
         return items;
     }
-
-    public List<Existencia> findBySucursalIdAndCategoriaId(Long sucursalId, Long categoriaId) throws SQLException {
+    
+    public List<Existencia> findBySucursalIdAndPalabraClave(Long sucursalId, String palabraClave) throws SQLException {
         String sql =
                 "SELECT * FROM existencias " +
-                "WHERE sucursal_id = ? AND categoria_id = ? " +
+                "WHERE sucursal_id = ? " +
+                "AND UPPER(descripcion) LIKE UPPER(?) " +
                 "ORDER BY orden ASC, codigo ASC";
 
         List<Existencia> items = new ArrayList<>();
@@ -45,7 +46,7 @@ public class ExistenciaRepository {
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, sucursalId);
-            ps.setLong(2, categoriaId);
+            ps.setString(2, palabraClave + "%");
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -57,33 +58,10 @@ public class ExistenciaRepository {
         return items;
     }
     
-    public List<Existencia> findBySucursalIdOrderByCategoriaYOrden(Long sucursalId) throws SQLException {
+    public List<Existencia> findBySucursalIdOrderByOrden(Long sucursalId) throws SQLException {
         String sql =
                 "SELECT * FROM existencias " +
                 "WHERE sucursal_id = ? " +
-                "ORDER BY categoria_id ASC, orden ASC, codigo ASC";
-
-        List<Existencia> items = new ArrayList<>();
-
-        try (Connection cn = MySqlConnectionFactory.getConnection();
-             PreparedStatement ps = cn.prepareStatement(sql)) {
-
-            ps.setLong(1, sucursalId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    items.add(map(rs));
-                }
-            }
-        }
-
-        return items;
-    }
-
-    public List<Existencia> findBySucursalIdAndCategoriaIdOrderByOrden(Long sucursalId, Long categoriaId) throws SQLException {
-        String sql =
-                "SELECT * FROM existencias " +
-                "WHERE sucursal_id = ? AND categoria_id = ? " +
                 "ORDER BY orden ASC, codigo ASC";
 
         List<Existencia> items = new ArrayList<>();
@@ -92,7 +70,6 @@ public class ExistenciaRepository {
              PreparedStatement ps = cn.prepareStatement(sql)) {
 
             ps.setLong(1, sucursalId);
-            ps.setLong(2, categoriaId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {

@@ -1,39 +1,33 @@
 package com.frexal.dalmendra.app.service;
 
-import com.frexal.dalmendra.app.model.Categoria;
 import com.frexal.dalmendra.app.model.Existencia;
 import com.frexal.dalmendra.app.model.Sucursal;
-import com.frexal.dalmendra.app.repository.CategoriaRepository;
 import com.frexal.dalmendra.app.repository.ExistenciaRepository;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class InventarioSyncService {
 
     private final SqlServerSucursalClient sqlServerSucursalClient;
     private final ExistenciaRepository existenciaRepository;
-    private final CategoriaRepository categoriaRepository;
     private final SucursalService sucursalService;
     private final OrdenExistenciaService ordenExistenciaService;
     private final AppState appState;
 
     public InventarioSyncService(SqlServerSucursalClient sqlServerSucursalClient,
                                  ExistenciaRepository existenciaRepository,
-                                 CategoriaRepository categoriaRepository,
                                  SucursalService sucursalService,
                                  OrdenExistenciaService ordenExistenciaService,
                                  AppState appState) {
         this.sqlServerSucursalClient = sqlServerSucursalClient;
         this.existenciaRepository = existenciaRepository;
-        this.categoriaRepository = categoriaRepository;
         this.sucursalService = sucursalService;
         this.ordenExistenciaService = ordenExistenciaService;
         this.appState = appState;
@@ -42,7 +36,9 @@ public class InventarioSyncService {
     public void sincronizarTodas() {
         appState.clearErroresSincronizacion();
 
-        for (Sucursal sucursal : appState.getSucursales()) {
+        List<Sucursal> sucursales = new ArrayList<>(appState.getSucursales());
+
+        for (Sucursal sucursal : sucursales) {
             if (sucursal == null) {
                 continue;
             }
@@ -73,8 +69,6 @@ public class InventarioSyncService {
         if (sucursal == null || sucursal.getId() == null) {
             throw new IllegalArgumentException("La sucursal es obligatoria.");
         }
-
-        List<Categoria> categoriasActivas = cargarCategoriasActivas();
 
         List<SqlServerSucursalClient.InventarioRemotoRow> inventario =
                 sqlServerSucursalClient.consultarInventario(sucursal);
@@ -136,7 +130,7 @@ public class InventarioSyncService {
 
             Existencia existencia = new Existencia();
             existencia.setSucursalId(sucursal.getId());
-            existencia.setCategoriaId(resolverCategoriaId(item.descripcion, categoriasActivas));
+            existencia.setCategoriaId(null);
             existencia.setCodigo(item.codigo);
             existencia.setDescripcion(safe(item.descripcion));
             existencia.setExistencia(item.existencia == null ? BigDecimal.ZERO : item.existencia);
@@ -147,68 +141,6 @@ public class InventarioSyncService {
         }
 
         sucursalService.actualizarFechaActualizacion(sucursal.getId(), ahora);
-    }
-
-    private List<Categoria> cargarCategoriasActivas() throws SQLException {
-        List<Categoria> categorias = categoriaRepository.findAll();
-        List<Categoria> activas = new ArrayList<>();
-
-        for (Categoria categoria : categorias) {
-            if (categoria == null) {
-                continue;
-            }
-            if (Boolean.FALSE.equals(categoria.getEstado())) {
-                continue;
-            }
-            if (categoria.getId() == null) {
-                continue;
-            }
-
-            activas.add(categoria);
-        }
-
-        activas.sort(
-                Comparator.comparing(Categoria::getOrden, Comparator.nullsLast(Integer::compareTo))
-                        .thenComparing(c -> normalizarTexto(c.getDescripcion()))
-        );
-
-        return activas;
-    }
-
-    private Long resolverCategoriaId(String descripcion, List<Categoria> categoriasActivas) {
-        if (categoriasActivas == null || categoriasActivas.isEmpty()) {
-            return null;
-        }
-
-        String texto = normalizarTexto(descripcion);
-        if (texto.isEmpty()) {
-            return null;
-        }
-
-        Categoria mejorCoincidencia = null;
-        int mejorLongitudPalabra = -1;
-
-        for (Categoria categoria : categoriasActivas) {
-            String palabraClave = normalizarTexto(categoria.getPalabraClave());
-
-            if (palabraClave.isEmpty()) {
-                continue;
-            }
-
-            if (texto.contains(palabraClave) && palabraClave.length() > mejorLongitudPalabra) {
-                mejorCoincidencia = categoria;
-                mejorLongitudPalabra = palabraClave.length();
-            }
-        }
-
-        return mejorCoincidencia != null ? mejorCoincidencia.getId() : null;
-    }
-
-    private String normalizarTexto(String valor) {
-        if (valor == null) {
-            return "";
-        }
-        return valor.trim().toLowerCase(Locale.ROOT);
     }
 
     private String construirMensajeError(Exception ex) {

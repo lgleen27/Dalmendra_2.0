@@ -2,21 +2,39 @@ package com.frexal.dalmendra.app.service;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class SyncSchedulerService {
 
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledExecutorService executorService;
+    private ScheduledFuture<?> tareaProgramada;
 
-    public void programarSincronizacion(Runnable tarea, int minutos) {
-        if (minutos <= 0) {
+    public synchronized void programarSincronizacion(Runnable tarea, int minutos) {
+        if (minutos <= 0 || tarea == null) {
             return;
         }
 
-        executorService.scheduleAtFixedRate(tarea, 0, minutos, TimeUnit.MINUTES);
+        detener();
+
+        executorService = Executors.newSingleThreadScheduledExecutor();
+        tareaProgramada = executorService.scheduleAtFixedRate(
+                tarea,
+                0,
+                minutos,
+                TimeUnit.MINUTES
+        );
     }
 
-    public void detener() {
-        executorService.shutdown();
+    public synchronized void detener() {
+        if (tareaProgramada != null) {
+            tareaProgramada.cancel(false);
+            tareaProgramada = null;
+        }
+
+        if (executorService != null && !executorService.isShutdown()) {
+            executorService.shutdownNow();
+            executorService = null;
+        }
     }
 }

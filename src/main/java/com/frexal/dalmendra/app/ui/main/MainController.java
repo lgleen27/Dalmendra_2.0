@@ -18,8 +18,8 @@ import com.frexal.dalmendra.app.service.SyncSchedulerService;
 import com.frexal.dalmendra.app.ui.config.ConfiguracionController;
 import com.frexal.dalmendra.app.ui.existencias.ExistenciasController;
 import com.frexal.dalmendra.app.ui.sucursales.SucursalesController;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.fxml.FXML;
@@ -40,22 +40,39 @@ import javafx.scene.control.TextArea;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import javafx.util.StringConverter;
-import java.util.ArrayList;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Controlador principal de la ventana principal de Dalmendra.
+ *
+ * Este controlador se encarga de:
+ * - cargar configuración y catálogos básicos,
+ * - administrar la sucursal seleccionada,
+ * - lanzar la sincronización automática o manual,
+ * - mostrar reportes y listados en el panel central,
+ * - reflejar en pantalla el estado general del sistema.
+ */
 public class MainController {
+
+    // ======================================================
+    // Componentes visuales definidos en MainView.fxml
+    // ======================================================
 
     @FXML
     private Label lblVistaActual;
@@ -67,19 +84,43 @@ public class MainController {
     private Label lblSync;
 
     @FXML
+    private Label lblUltimaSync;
+
+    @FXML
     private StackPane pnlCentro;
 
     @FXML
     private ComboBox<Sucursal> cmbSucursales;
 
+    // ======================================================
+    // Estado general y acceso a datos/servicios
+    // ======================================================
+
+    /**
+     * Estado compartido de la aplicación.
+     * Aquí se conserva la sucursal seleccionada, configuración en memoria
+     * y banderas auxiliares de sincronización.
+     */
     private final AppState appState = new AppState();
 
+    /**
+     * Repositorios usados por la ventana principal.
+     * Permiten leer configuración, sucursales, existencias, categorías y ordenamientos.
+     */
     private final ConfiguracionRepository configuracionRepository = new ConfiguracionRepository();
     private final SucursalRepository sucursalRepository = new SucursalRepository();
     private final ExistenciaRepository existenciaRepository = new ExistenciaRepository();
     private final OrdenExistenciaRepository ordenExistenciaRepository = new OrdenExistenciaRepository();
     private final CategoriaRepository categoriaRepository = new CategoriaRepository();
 
+    /**
+     * Bandera simple para evitar que se dispare más de una sincronización al mismo tiempo.
+     */
+    private volatile boolean sincronizando = false;
+
+    /**
+     * Servicios principales usados por la ventana.
+     */
     private final ConfiguracionService configuracionService =
             new ConfiguracionService(configuracionRepository, appState);
 
@@ -93,7 +134,6 @@ public class MainController {
             new InventarioSyncService(
                     new SqlServerSucursalClient(),
                     existenciaRepository,
-                    categoriaRepository,
                     sucursalService,
                     ordenExistenciaService,
                     appState
@@ -101,10 +141,47 @@ public class MainController {
 
     private final SyncSchedulerService syncSchedulerService = new SyncSchedulerService();
 
+    // ======================================================
+    // Utilidades de formato y alertas de sincronización
+    // ======================================================
+
+    /**
+     * Formato visual usado para mostrar la fecha/hora de la última sincronización correcta.
+     */
+    private final DateTimeFormatter dateTimeFormatter =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+    /**
+     * Alerta reutilizable para errores de sincronización.
+     * Se mantiene una sola instancia para evitar que se acumulen varias ventanas.
+     */
+    private Alert alertErroresSync;
+
+    /**
+     * Temporizador que cierra automáticamente la alerta de errores de sincronización
+     * después de 30 segundos.
+     */
+    private PauseTransition autoCloseErroresSync;
+
+    // ======================================================
+    // Inicialización principal
+    // ======================================================
+
+    /**
+     * Inicializa la ventana principal.
+     *
+     * Flujo principal:
+     * 1. Carga configuración general.
+     * 2. Carga sucursales y órdenes.
+     * 3. Prepara el combo de sucursales.
+     * 4. Programa el temporizador de sincronización automática.
+     * 5. Si existen sucursales activas, sincroniza y abre el reporte inicial.
+     */
     @FXML
     public void initialize() {
         try {
             lblEstado.setText("Cargando configuración...");
+
             configuracionService.cargarConfiguracion();
             sucursalService.cargarSucursales();
             ordenExistenciaService.cargarOrdenes();
@@ -112,6 +189,7 @@ public class MainController {
             configurarComboSucursales();
             cargarComboSucursales();
             aplicarColorSucursalActual();
+            actualizarTextoUltimaSincronizacion();
             definirTimerSync();
 
             if (sucursalService.haySucursalesActivas()) {
@@ -120,6 +198,7 @@ public class MainController {
             } else {
                 lblVistaActual.setText("No hay sucursales activas. Abra el catálogo de sucursales.");
                 lblSync.setText("Sin sucursales activas");
+                lblUltimaSync.setText("Sin registros");
                 setContenidoCentral(new Label("No hay sucursales activas."));
                 mostrarInformacion(
                         "Dalmendra",
@@ -139,6 +218,13 @@ public class MainController {
         }
     }
 
+    // ======================================================
+    // Manejo del combo de sucursales
+    // ======================================================
+
+    /**
+     * Configura cómo se mostrará cada sucursal dentro del ComboBox.
+     */
     private void configurarComboSucursales() {
         cmbSucursales.setConverter(new StringConverter<Sucursal>() {
             @Override
@@ -153,6 +239,9 @@ public class MainController {
         });
     }
 
+    /**
+     * Carga las sucursales activas en el combo y restaura la selección actual si existe.
+     */
     private void cargarComboSucursales() {
         cmbSucursales.getItems().clear();
         cmbSucursales.getItems().addAll(appState.getSucursalesActivas());
@@ -165,6 +254,7 @@ public class MainController {
                     cmbSucursales.getSelectionModel().select(sucursal);
                     appState.setSucursalSeleccionada(sucursal);
                     aplicarColorSucursal(sucursal);
+                    actualizarTextoUltimaSincronizacion();
                     return;
                 }
             }
@@ -174,17 +264,24 @@ public class MainController {
             cmbSucursales.getSelectionModel().selectFirst();
             appState.setSucursalSeleccionada(cmbSucursales.getSelectionModel().getSelectedItem());
             aplicarColorSucursalActual();
+            actualizarTextoUltimaSincronizacion();
         } else {
             appState.setSucursalSeleccionada(null);
             aplicarColorSucursal(null);
+            actualizarTextoUltimaSincronizacion();
         }
     }
 
+    /**
+     * Se ejecuta cuando el usuario cambia la sucursal activa.
+     * Actualiza el estado visual, color de fondo y contenido del reporte.
+     */
     @FXML
     private void onSucursalSeleccionada() {
         Sucursal sucursal = cmbSucursales.getSelectionModel().getSelectedItem();
         appState.setSucursalSeleccionada(sucursal);
         aplicarColorSucursalActual();
+        actualizarTextoUltimaSincronizacion();
 
         if (sucursal != null) {
             lblEstado.setText("Sucursal activa: " + sucursal.getNombreSucursal());
@@ -195,6 +292,47 @@ public class MainController {
         }
     }
 
+    /**
+     * Refresca las sucursales desde base de datos y trata de conservar
+     * la sucursal que el usuario tenía seleccionada.
+     *
+     * Esto permite traer la fecha más reciente de sincronización correcta
+     * después de ejecutar una sincronización.
+     */
+    private void refrescarSucursalSeleccionadaDesdeCombo() {
+        Sucursal seleccionadaAnterior = appState.getSucursalSeleccionada();
+
+        try {
+            sucursalService.cargarSucursales();
+        } catch (Exception ex) {
+            actualizarTextoUltimaSincronizacion();
+            return;
+        }
+
+        cargarComboSucursales();
+
+        if (seleccionadaAnterior != null && seleccionadaAnterior.getId() != null) {
+            for (Sucursal sucursal : cmbSucursales.getItems()) {
+                if (sucursal.getId() != null && sucursal.getId().equals(seleccionadaAnterior.getId())) {
+                    cmbSucursales.getSelectionModel().select(sucursal);
+                    appState.setSucursalSeleccionada(sucursal);
+                    aplicarColorSucursal(sucursal);
+                    break;
+                }
+            }
+        }
+
+        actualizarTextoUltimaSincronizacion();
+    }
+
+    // ======================================================
+    // Apertura de reportes principales
+    // ======================================================
+
+    /**
+     * Abre la vista inicial configurada en la aplicación.
+     * Si no existe configuración, por defecto abre el reporte por categorías.
+     */
     private void abrirReporteInicial() {
         String reporte = appState.getFirstReport();
 
@@ -219,59 +357,9 @@ public class MainController {
         }
     }
 
-    private void actualizarExistencias() {
-        if (!sucursalService.haySucursalesActivas()) {
-            lblSync.setText("Sin sucursales activas");
-            lblEstado.setText("No hay sucursales activas para sincronizar");
-            return;
-        }
-
-        lblSync.setText("Sincronizando...");
-        lblEstado.setText("Actualizando existencias...");
-
-        Thread thread = new Thread(() -> {
-            inventarioSyncService.sincronizarTodas();
-
-            Platform.runLater(() -> {
-                if (appState.isHayErrorSincronizacion()) {
-                    lblSync.setText("Con errores");
-                    mostrarErroresSincronizacion(appState.getErroresSincronizacion());
-                } else {
-                    lblSync.setText("Correcta");
-                }
-
-                abrirReporteInicial();
-
-                if (appState.getSucursalSeleccionada() != null) {
-                    lblEstado.setText("Existencias actualizadas - " + appState.getSucursalSeleccionada().getNombreSucursal());
-                } else {
-                    lblEstado.setText("Existencias actualizadas");
-                }
-            });
-        });
-
-        thread.setDaemon(true);
-        thread.start();
-    }
-
-    private void definirTimerSync() {
-        try {
-            int minutos = Integer.parseInt(appState.getTimeSyncSucursal());
-
-            if (minutos > 0) {
-                syncSchedulerService.programarSincronizacion(
-                        this::actualizarExistencias,
-                        minutos
-                );
-                lblSync.setText("Programada cada " + minutos + " min");
-            } else {
-                lblSync.setText("Desactivada");
-            }
-        } catch (Exception ex) {
-            lblSync.setText("Configuración inválida");
-        }
-    }
-
+    /**
+     * Abre el reporte agrupado por categorías.
+     */
     private void abrirVistaPorCategorias() {
         lblVistaActual.setText("Vista: Reporte por Categorias");
         cargarReportePorCategoriasEnPanel();
@@ -283,6 +371,9 @@ public class MainController {
         }
     }
 
+    /**
+     * Abre el listado general mostrando el código del artículo.
+     */
     private void abrirVistaListadoConCodigo() {
         lblVistaActual.setText("Vista: Listado con Codigo");
         cargarListadoGeneralEnPanel(true);
@@ -294,6 +385,9 @@ public class MainController {
         }
     }
 
+    /**
+     * Abre el listado general ocultando el código del artículo.
+     */
     private void abrirVistaListadoSinCodigo() {
         lblVistaActual.setText("Vista: Listado sin Codigo");
         cargarListadoGeneralEnPanel(false);
@@ -332,6 +426,127 @@ public class MainController {
         }
     }
 
+    // ======================================================
+    // Sincronización automática y estado visible
+    // ======================================================
+
+    /**
+     * Ejecuta la sincronización de existencias en un hilo separado
+     * para no congelar la interfaz gráfica.
+     *
+     * Comportamiento:
+     * - Evita lanzar dos sincronizaciones simultáneas.
+     * - Cambia el texto de estado mientras sincroniza.
+     * - Si hubo errores, muestra una sola alerta reutilizable.
+     * - Si la sincronización fue correcta, actualiza la última fecha visible.
+     */
+    private void actualizarExistencias() {
+        if (sincronizando) {
+            return;
+        }
+
+        if (!sucursalService.haySucursalesActivas()) {
+            lblSync.setText("Sin sucursales activas");
+            lblEstado.setText("No hay sucursales activas para sincronizar");
+            actualizarTextoUltimaSincronizacion();
+            return;
+        }
+
+        sincronizando = true;
+        lblSync.setText("Sincronizando...");
+        lblEstado.setText("Actualizando existencias...");
+
+        Thread thread = new Thread(() -> {
+            try {
+                inventarioSyncService.sincronizarTodas();
+
+                Platform.runLater(() -> {
+                    refrescarSucursalSeleccionadaDesdeCombo();
+
+                    if (appState.isHayErrorSincronizacion()) {
+                        lblSync.setText("Con errores");
+                        mostrarErroresSincronizacionNoBloqueante(appState.getErroresSincronizacion());
+                    } else {
+                        lblSync.setText("Correcta");
+                    }
+
+                    abrirReporteInicial();
+
+                    if (appState.getSucursalSeleccionada() != null) {
+                        lblEstado.setText("Existencias actualizadas - " + appState.getSucursalSeleccionada().getNombreSucursal());
+                    } else {
+                        lblEstado.setText("Existencias actualizadas");
+                    }
+                });
+
+            } catch (Exception ex) {
+                Platform.runLater(() -> {
+                    lblSync.setText("Error");
+                    lblEstado.setText("Fallo durante la sincronización");
+                    mostrarError("Error de sincronización", ex.getMessage());
+                });
+            } finally {
+                sincronizando = false;
+            }
+        });
+
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    /**
+     * Configura la sincronización automática usando el número de minutos
+     * almacenado en la configuración.
+     */
+    private void definirTimerSync() {
+        try {
+            int minutos = Integer.parseInt(appState.getTimeSyncSucursal());
+
+            if (minutos > 0) {
+                syncSchedulerService.detener();
+                syncSchedulerService.programarSincronizacion(
+                        () -> Platform.runLater(this::actualizarExistencias),
+                        minutos
+                );
+                lblSync.setText("Programada cada " + minutos + " min");
+            } else {
+                syncSchedulerService.detener();
+                lblSync.setText("Desactivada");
+            }
+        } catch (Exception ex) {
+            lblSync.setText("Configuración inválida");
+        }
+    }
+
+    /**
+     * Actualiza el label de la última sincronización correcta
+     * usando la fecha almacenada en la sucursal seleccionada.
+     */
+    private void actualizarTextoUltimaSincronizacion() {
+        if (lblUltimaSync == null) {
+            return;
+        }
+
+        Sucursal sucursal = appState.getSucursalSeleccionada();
+
+        if (sucursal == null) {
+            lblUltimaSync.setText("Sin sucursal");
+            return;
+        }
+
+        LocalDateTime fecha = sucursal.getFechaHoraActualizacion();
+
+        if (fecha == null) {
+            lblUltimaSync.setText("Sin registros");
+        } else {
+            lblUltimaSync.setText(fecha.format(dateTimeFormatter));
+        }
+    }
+
+    // ======================================================
+    // Apertura de catálogos y configuración
+    // ======================================================
+
     @FXML
     private void onSucursales() {
         try {
@@ -357,6 +572,7 @@ public class MainController {
             sucursalService.cargarSucursales();
             cargarComboSucursales();
             aplicarColorSucursalActual();
+            actualizarTextoUltimaSincronizacion();
 
             if (sucursalService.haySucursalesActivas()) {
                 lblEstado.setText("Catálogo de sucursales cerrado");
@@ -364,6 +580,7 @@ public class MainController {
             } else {
                 lblVistaActual.setText("No hay sucursales activas. Abra el catálogo de sucursales.");
                 lblSync.setText("Sin sucursales activas");
+                lblUltimaSync.setText("Sin registros");
                 lblEstado.setText("Catálogo de sucursales cerrado");
                 setContenidoCentral(new Label("No hay sucursales activas."));
             }
@@ -435,6 +652,10 @@ public class MainController {
         abrirVistaConfiguracion();
     }
 
+    /**
+     * Abre la ventana de configuración.
+     * Al guardar, vuelve a definir el temporizador de sincronización.
+     */
     private void abrirVistaConfiguracion() {
         try {
             FXMLLoader loader = new FXMLLoader(
@@ -448,6 +669,7 @@ public class MainController {
                 definirTimerSync();
                 lblEstado.setText("Configuración actualizada");
                 lblSync.setText("Configuración guardada");
+                actualizarTextoUltimaSincronizacion();
             });
 
             Stage stage = new Stage();
@@ -467,6 +689,13 @@ public class MainController {
         }
     }
 
+    // ======================================================
+    // Utilidades del panel central
+    // ======================================================
+
+    /**
+     * Reemplaza completamente el contenido del panel central.
+     */
     private void setContenidoCentral(Node node) {
         pnlCentro.getChildren().clear();
         if (node != null) {
@@ -474,88 +703,131 @@ public class MainController {
         }
     }
 
+    /**
+     * Envuelve un nodo dentro de un ScrollPane para permitir desplazamiento vertical.
+     */
     private ScrollPane crearContenedorScrollable(Node contenido) {
         ScrollPane scrollPane = new ScrollPane(contenido);
         scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(true);
+        scrollPane.setFitToHeight(false);
         scrollPane.setPannable(true);
         scrollPane.setStyle("-fx-background: transparent; -fx-background-color: transparent;");
         return scrollPane;
     }
 
-    private TableView<Existencia> crearTablaListado(boolean mostrarCodigo) {
-        TableView<Existencia> table = new TableView<>();
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        table.setPlaceholder(new Label("No hay registros para mostrar."));
-        table.setStyle("-fx-font-size: 16px;");
-
-        if (mostrarCodigo) {
-            TableColumn<Existencia, String> colCodigo = new TableColumn<>("Código");
-            colCodigo.setCellValueFactory(data ->
-                    new ReadOnlyStringWrapper(valor(data.getValue().getCodigo())));
-            table.getColumns().add(colCodigo);
-        }
-
-        TableColumn<Existencia, String> colDescripcion = new TableColumn<>("Descripción");
-        colDescripcion.setCellValueFactory(data ->
-                new ReadOnlyStringWrapper(valor(data.getValue().getDescripcion())));
-
-        TableColumn<Existencia, BigDecimal> colExistencia = new TableColumn<>("Existencia");
-        colExistencia.setCellValueFactory(data ->
-                new ReadOnlyObjectWrapper<>(data.getValue().getExistenciaOrZero()));
-
-        DecimalFormat decimalFormat = new DecimalFormat("#,##0.####");
-        colExistencia.setCellFactory(col -> new TableCell<Existencia, BigDecimal>() {
-            @Override
-            protected void updateItem(BigDecimal item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null) {
-                    setText(null);
-                } else {
-                    setText(decimalFormat.format(item));
-                }
-                setAlignment(Pos.CENTER_RIGHT);
-            }
-        });
-
-        table.getColumns().add(colDescripcion);
-        table.getColumns().add(colExistencia);
-
-        return table;
+    /**
+     * Crea una columna visual usada en el reporte por categorías.
+     */
+    private VBox crearColumnaReporte() {
+        VBox columna = new VBox(10);
+        columna.setAlignment(Pos.TOP_LEFT);
+        columna.setFillWidth(true);
+        columna.setMaxWidth(Double.MAX_VALUE);
+        columna.setPrefWidth(420);
+        return columna;
     }
 
+    // ======================================================
+    // Reporte por categorías
+    // ======================================================
+
+    /**
+     * Crea el bloque visual de una categoría con su encabezado
+     * y la lista de existencias pertenecientes a esa categoría.
+     */
     private VBox crearBloqueCategoria(Categoria categoria, List<Existencia> existencias) {
-        VBox box = new VBox(4);
-        box.setPrefWidth(440);
-        box.setMaxWidth(440);
-        box.getStyleClass().add("reporte-categoria-box");
+        VBox box = new VBox();
+        box.setSpacing(0);
+        box.setAlignment(Pos.TOP_LEFT);
+        box.setFillWidth(true);
+        box.setMaxWidth(Double.MAX_VALUE);
+        box.setStyle(
+                "-fx-background-color: #f4f4f4;" +
+                "-fx-border-color: #a9a9a9;" +
+                "-fx-border-width: 1;"
+        );
 
         Label titulo = new Label(valor(categoria.getDescripcion()).toUpperCase());
-        titulo.getStyleClass().add("reporte-categoria-titulo");
-
-        TableView<Existencia> tabla = crearTablaListado(false);
-        tabla.setFixedCellSize(28);
-        tabla.prefHeightProperty().bind(
-                Bindings.size(tabla.getItems()).multiply(tabla.getFixedCellSize()).add(6)
+        titulo.setMaxWidth(Double.MAX_VALUE);
+        titulo.setStyle(
+                "-fx-font-size: 18px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #2c2c2c;" +
+                "-fx-padding: 2 6 4 6;" +
+                "-fx-background-color: transparent;"
         );
-        tabla.setMinHeight(50);
-        tabla.setMaxWidth(Double.MAX_VALUE);
-        tabla.getStyleClass().add("reporte-categoria-table");
 
-        tabla.getItems().setAll(existencias);
+        VBox filas = new VBox();
+        filas.setFillWidth(true);
 
-        String css = getClass()
-                .getResource("/com/frexal/dalmendra/app/ui/main/main-reportes.css")
-                .toExternalForm();
-
-        if (!tabla.getStylesheets().contains(css)) {
-            tabla.getStylesheets().add(css);
+        for (int i = 0; i < existencias.size(); i++) {
+            filas.getChildren().add(crearFilaCategoria(existencias.get(i), categoria, i == existencias.size() - 1));
         }
 
-        box.getChildren().addAll(titulo, tabla);
+        box.getChildren().addAll(titulo, filas);
         return box;
     }
 
+    /**
+     * Crea una fila individual dentro del bloque de categoría.
+     * La descripción puede limpiarse quitando la palabra clave de la categoría.
+     */
+    private Node crearFilaCategoria(Existencia existencia, Categoria categoria, boolean ultimaFila) {
+        GridPane fila = new GridPane();
+        fila.setHgap(8);
+        fila.setAlignment(Pos.CENTER_LEFT);
+        fila.setMaxWidth(Double.MAX_VALUE);
+        fila.setPadding(new Insets(0, 6, 0, 6));
+
+        String bordeInferior = ultimaFila ? "0" : "1";
+
+        fila.setStyle(
+                "-fx-border-color: #c0c0c0;" +
+                "-fx-border-width: 1 0 " + bordeInferior + " 0;" +
+                "-fx-background-color: #f4f4f4;"
+        );
+
+        Label lblDescripcion = new Label(limpiarDescripcionParaCategoria(existencia, categoria));
+        lblDescripcion.setWrapText(false);
+        lblDescripcion.setMaxWidth(Double.MAX_VALUE);
+        lblDescripcion.setStyle(
+                "-fx-font-size: 15px;" +
+                "-fx-text-fill: #222222;" +
+                "-fx-padding: 2 0 2 0;"
+        );
+
+        Label lblExistencia = new Label(formatearExistencia(existencia.getExistenciaOrZero()));
+        lblExistencia.setStyle(
+                "-fx-font-size: 15px;" +
+                "-fx-font-weight: bold;" +
+                "-fx-text-fill: #222222;" +
+                "-fx-padding: 2 0 2 0;"
+        );
+        lblExistencia.setAlignment(Pos.CENTER_RIGHT);
+        lblExistencia.setMinWidth(46);
+        lblExistencia.setPrefWidth(46);
+        lblExistencia.setMaxWidth(46);
+
+        GridPane.setHgrow(lblDescripcion, Priority.ALWAYS);
+
+        fila.add(lblDescripcion, 0, 0);
+        fila.add(lblExistencia, 1, 0);
+
+        return fila;
+    }
+
+    /**
+     * Formatea la existencia numérica para presentarla en pantalla.
+     */
+    private String formatearExistencia(BigDecimal valor) {
+        DecimalFormat decimalFormat = new DecimalFormat("#,##0.####");
+        return decimalFormat.format(valor != null ? valor : BigDecimal.ZERO);
+    }
+
+    /**
+     * Construye y muestra el reporte por categorías en el panel central.
+     * Distribuye las categorías en tres columnas visuales.
+     */
     private void cargarReportePorCategoriasEnPanel() {
         try {
             Sucursal sucursal = appState.getSucursalSeleccionada();
@@ -566,48 +838,46 @@ public class MainController {
             }
 
             List<Categoria> categorias = categoriaRepository.findActivas();
+            List<Existencia> existencias = existenciaRepository.findBySucursalId(sucursal.getId());
+            List<Existencia> pendientes = new ArrayList<>(existencias);
 
-            FlowPane flow = new FlowPane();
-            flow.setPadding(new Insets(14));
-            flow.setHgap(18);
-            flow.setVgap(18);
-            flow.setPrefWrapLength(980);
-            flow.setStyle("-fx-background-color: transparent;");
+            HBox layoutColumnas = new HBox(12);
+            layoutColumnas.setPadding(new Insets(8, 10, 8, 10));
+            layoutColumnas.setAlignment(Pos.TOP_LEFT);
+            layoutColumnas.setStyle("-fx-background-color: transparent;");
+
+            VBox columna1 = crearColumnaReporte();
+            VBox columna2 = crearColumnaReporte();
+            VBox columna3 = crearColumnaReporte();
+
+            List<VBox> columnas = List.of(columna1, columna2, columna3);
+            int indiceColumna = 0;
 
             for (Categoria categoria : categorias) {
-                if (categoria.getId() == null) {
-                    continue;
+                List<Existencia> registrosCategoria = filtrarExistenciasPorCategoria(pendientes, categoria);
+
+                if (!registrosCategoria.isEmpty()) {
+                    VBox bloque = crearBloqueCategoria(categoria, registrosCategoria);
+                    columnas.get(indiceColumna).getChildren().add(bloque);
+                    pendientes.removeAll(registrosCategoria);
+                    indiceColumna = (indiceColumna + 1) % columnas.size();
                 }
-
-                List<Existencia> registros =
-                        existenciaRepository.findBySucursalIdAndCategoriaIdOrderByOrden(
-                                sucursal.getId(),
-                                categoria.getId()
-                        );
-
-                if (registros == null || registros.isEmpty()) {
-                    continue;
-                }
-
-                flow.getChildren().add(crearBloqueCategoria(categoria, registros));
             }
 
-            if (flow.getChildren().isEmpty()) {
+            layoutColumnas.getChildren().addAll(columna1, columna2, columna3);
+
+            HBox.setHgrow(columna1, Priority.ALWAYS);
+            HBox.setHgrow(columna2, Priority.ALWAYS);
+            HBox.setHgrow(columna3, Priority.ALWAYS);
+
+            if (columna1.getChildren().isEmpty() && columna2.getChildren().isEmpty() && columna3.getChildren().isEmpty()) {
                 Label lbl = new Label("No hay existencias para mostrar en la sucursal seleccionada.");
                 lbl.setStyle("-fx-font-size: 16px; -fx-text-fill: #30505b;");
-                flow.getChildren().add(lbl);
+                setContenidoCentral(lbl);
+                return;
             }
 
-            ScrollPane scrollPane = crearContenedorScrollable(flow);
-
-            String css = getClass()
-                    .getResource("/com/frexal/dalmendra/app/ui/main/main-reportes.css")
-                    .toExternalForm();
-
-            if (!scrollPane.getStylesheets().contains(css)) {
-                scrollPane.getStylesheets().add(css);
-            }
-
+            ScrollPane scrollPane = crearContenedorScrollable(layoutColumnas);
             setContenidoCentral(scrollPane);
 
         } catch (Exception ex) {
@@ -615,6 +885,85 @@ public class MainController {
         }
     }
 
+    /**
+     * Valida si una existencia pertenece a una categoría con base
+     * en la palabra clave configurada para esa categoría.
+     */
+    private boolean coincideCategoria(Existencia existencia, Categoria categoria) {
+        if (existencia == null || categoria == null) {
+            return false;
+        }
+
+        String palabraClave = normalizarTexto(categoria.getPalabraClave());
+        if (palabraClave.isEmpty()) {
+            return false;
+        }
+
+        String descripcion = normalizarTexto(existencia.getDescripcion());
+        return descripcion.startsWith(palabraClave);
+    }
+
+    /**
+     * Normaliza texto para comparaciones internas.
+     */
+    private String normalizarTexto(String texto) {
+        if (texto == null) {
+            return "";
+        }
+
+        return texto.trim()
+                .toUpperCase()
+                .replaceAll("\\s+", " ");
+    }
+
+    /**
+     * Quita de la descripción la palabra clave de la categoría
+     * para que el reporte visual sea más limpio.
+     */
+    private String limpiarDescripcionParaCategoria(Existencia existencia, Categoria categoria) {
+        String descripcion = valor(existencia != null ? existencia.getDescripcion() : "");
+        String palabraClave = valor(categoria != null ? categoria.getPalabraClave() : "");
+
+        if (descripcion.isEmpty() || palabraClave.isEmpty()) {
+            return descripcion;
+        }
+
+        String descripcionNormalizada = normalizarTexto(descripcion);
+        String palabraClaveNormalizada = normalizarTexto(palabraClave);
+
+        if (!descripcionNormalizada.startsWith(palabraClaveNormalizada)) {
+            return descripcion;
+        }
+
+        String restante = descripcion.trim().substring(palabraClave.trim().length()).trim();
+        restante = restante.replaceFirst("^[\\.-]+\\s*", "").trim();
+
+        return restante.isEmpty() ? descripcion : restante;
+    }
+
+    /**
+     * Obtiene las existencias que pertenecen a una categoría específica.
+     */
+    private List<Existencia> filtrarExistenciasPorCategoria(List<Existencia> origen, Categoria categoria) {
+        List<Existencia> resultado = new ArrayList<>();
+
+        for (Existencia existencia : origen) {
+            if (coincideCategoria(existencia, categoria)) {
+                resultado.add(existencia);
+            }
+        }
+
+        return resultado;
+    }
+
+    // ======================================================
+    // Listado general
+    // ======================================================
+
+    /**
+     * Carga el listado general en formato de tabla triple.
+     * Puede mostrar o no la columna de código.
+     */
     private void cargarListadoGeneralEnPanel(boolean mostrarCodigo) {
         try {
             Sucursal sucursal = appState.getSucursalSeleccionada();
@@ -642,14 +991,28 @@ public class MainController {
         }
     }
 
+    /**
+     * Convierte nulos a cadena vacía para evitar errores visuales.
+     */
     private String valor(String texto) {
         return texto == null ? "" : texto.trim();
     }
 
+    // ======================================================
+    // Color visual según sucursal
+    // ======================================================
+
+    /**
+     * Aplica el color de la sucursal actual al panel central.
+     */
     private void aplicarColorSucursalActual() {
         aplicarColorSucursal(appState.getSucursalSeleccionada());
     }
 
+    /**
+     * Toma el color configurado para la sucursal y aplica
+     * una versión suave como fondo del panel principal.
+     */
     private void aplicarColorSucursal(Sucursal sucursal) {
         Color colorBase = Color.WHITE;
 
@@ -668,6 +1031,9 @@ public class MainController {
         ));
     }
 
+    /**
+     * Normaliza el color de sucursal para garantizar un valor hexadecimal válido.
+     */
     private String normalizarColorSucursal(String color) {
         String value = color.trim();
 
@@ -682,30 +1048,73 @@ public class MainController {
         return "#FFFFFF";
     }
 
-    private void mostrarErroresSincronizacion(java.util.List<String> errores) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Errores de sincronización");
-        alert.setHeaderText("Se encontraron errores al sincronizar sucursales.");
-        alert.setContentText("Revise el detalle expandible.");
+    // ======================================================
+    // Alertas y mensajes al usuario
+    // ======================================================
 
-        TextArea textArea = new TextArea(String.join("\n", errores));
-        textArea.setEditable(false);
-        textArea.setWrapText(true);
-        textArea.setMaxWidth(Double.MAX_VALUE);
-        textArea.setMaxHeight(Double.MAX_VALUE);
+    /**
+     * Muestra una alerta de errores de sincronización no bloqueante.
+     *
+     * Características:
+     * - reutiliza la misma ventana,
+     * - actualiza el detalle si llegan nuevos errores,
+     * - evita que se acumulen varias alertas,
+     * - se cierra sola después de 30 segundos.
+     */
+    private void mostrarErroresSincronizacionNoBloqueante(List<String> errores) {
+        String detalle = (errores == null || errores.isEmpty())
+                ? "Se detectaron errores de sincronización."
+                : String.join("\n", errores);
 
-        GridPane.setVgrow(textArea, Priority.ALWAYS);
-        GridPane.setHgrow(textArea, Priority.ALWAYS);
+        if (alertErroresSync == null) {
+            alertErroresSync = new Alert(Alert.AlertType.ERROR);
+            alertErroresSync.setTitle("Errores de sincronización");
+            alertErroresSync.setHeaderText("Se encontraron errores al sincronizar sucursales.");
+            alertErroresSync.setContentText("La ventana se cerrará automáticamente en 30 segundos.");
 
-        GridPane content = new GridPane();
-        content.setMaxWidth(Double.MAX_VALUE);
-        content.add(textArea, 0, 0);
+            TextArea textArea = new TextArea();
+            textArea.setEditable(false);
+            textArea.setWrapText(true);
+            textArea.setMaxWidth(Double.MAX_VALUE);
+            textArea.setMaxHeight(Double.MAX_VALUE);
 
-        alert.getDialogPane().setExpandableContent(content);
-        alert.getDialogPane().setExpanded(true);
-        alert.showAndWait();
+            GridPane.setVgrow(textArea, Priority.ALWAYS);
+            GridPane.setHgrow(textArea, Priority.ALWAYS);
+
+            GridPane content = new GridPane();
+            content.setMaxWidth(Double.MAX_VALUE);
+            content.add(textArea, 0, 0);
+
+            alertErroresSync.getDialogPane().setExpandableContent(content);
+            alertErroresSync.getDialogPane().setExpanded(true);
+        }
+
+        TextArea textArea = (TextArea) ((GridPane) alertErroresSync.getDialogPane().getExpandableContent())
+                .getChildren().get(0);
+
+        textArea.setText(detalle);
+
+        if (autoCloseErroresSync == null) {
+            autoCloseErroresSync = new PauseTransition(Duration.seconds(30));
+            autoCloseErroresSync.setOnFinished(event -> {
+                if (alertErroresSync != null) {
+                    alertErroresSync.hide();
+                }
+            });
+        }
+
+        autoCloseErroresSync.stop();
+
+        if (!alertErroresSync.isShowing()) {
+            alertErroresSync.show();
+        }
+
+        autoCloseErroresSync.playFromStart();
     }
 
+    /**
+     * Muestra una alerta informativa modal.
+     */
     private void mostrarInformacion(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(titulo);
@@ -714,6 +1123,9 @@ public class MainController {
         alert.showAndWait();
     }
 
+    /**
+     * Muestra una alerta de error modal.
+     */
     private void mostrarError(String titulo, String mensaje) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle(titulo);
@@ -721,7 +1133,15 @@ public class MainController {
         alert.setContentText(mensaje);
         alert.showAndWait();
     }
-    
+
+    // ======================================================
+    // Construcción del listado triple
+    // ======================================================
+
+    /**
+     * Agrupa existencias de tres en tres para formar una fila
+     * del listado general tipo triple.
+     */
     private List<FilaListadoTriple> construirFilasTriples(List<Existencia> registros) {
         List<FilaListadoTriple> filas = new ArrayList<>();
 
@@ -735,7 +1155,10 @@ public class MainController {
 
         return filas;
     }
-    
+
+    /**
+     * Crea una columna separadora visual entre grupos del listado triple.
+     */
     private TableColumn<FilaListadoTriple, String> crearColumnaSeparador() {
         TableColumn<FilaListadoTriple, String> col = new TableColumn<>("");
         col.setSortable(false);
@@ -747,7 +1170,11 @@ public class MainController {
         col.setCellValueFactory(data -> new ReadOnlyStringWrapper(""));
         return col;
     }
-    
+
+    /**
+     * Obtiene la existencia correspondiente a una de las tres posiciones
+     * dentro de la fila del listado triple.
+     */
     private Existencia getExistenciaDeFila(FilaListadoTriple fila, int index) {
         if (fila == null) {
             return null;
@@ -765,11 +1192,19 @@ public class MainController {
         }
     }
 
+    /**
+     * Obtiene un texto de una existencia específica de la fila,
+     * usando una función que indica qué propiedad extraer.
+     */
     private String textoExistencia(FilaListadoTriple fila, int index, java.util.function.Function<Existencia, String> mapper) {
         Existencia e = getExistenciaDeFila(fila, index);
         return e == null ? "" : valor(mapper.apply(e));
     }
-    
+
+    /**
+     * Crea la tabla visual del listado triple.
+     * Cada fila puede contener hasta tres artículos.
+     */
     private TableView<FilaListadoTriple> crearTablaListadoTriple(boolean mostrarCodigo) {
         TableView<FilaListadoTriple> table = new TableView<>();
         table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
@@ -820,11 +1255,13 @@ public class MainController {
                 @Override
                 protected void updateItem(BigDecimal item, boolean empty) {
                     super.updateItem(item, empty);
+
                     if (empty || item == null) {
                         setText("");
                     } else {
                         setText(decimalFormat.format(item));
                     }
+
                     setAlignment(Pos.CENTER_RIGHT);
                 }
             });

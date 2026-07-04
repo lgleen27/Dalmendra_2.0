@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-    <actions>
+<actions>
         <action>
             <actionName>run</actionName>
             <packagings>
@@ -35,6 +35,13 @@
                 <!-- compile not needed with javafx-maven-plugin v0.0.5 -->
                 <goal>compile</goal>
                 <goal>javafx:jlink</goal>
+            </goals>
+        </action>
+        <action>
+            <actionName>CUSTOM--Djdk.tls.client.protocols=TLSv1,TLSv1.1,TLSv1.2</actionName>
+            <displayName>-Djdk.tls.client.protocols=TLSv1,TLSv1.1,TLSv1.2</displayName>
+            <goals>
+                <goal>-Djdk.tls.client.protocols=TLSv1,TLSv1.1,TLSv1.2</goal>
             </goals>
         </action>
     </actions>

@@ -33,7 +33,6 @@ com/frexal/dalmendra/app/repository/SucursalRepository.class
 com/frexal/dalmendra/app/ui/existencias/ExistenciasController$2.class
 com/frexal/dalmendra/app/ui/categorias/CategoriasController.class
 com/frexal/dalmendra/app/repository/ExistenciaRepository.class
-com/frexal/dalmendra/app/ui/main/MainController$3.class
 com/frexal/dalmendra/app/service/SucursalService.class
 com/frexal/dalmendra/app/repository/ConfiguracionRepository.class
 com/frexal/dalmendra/app/DalmendraApplication.class
