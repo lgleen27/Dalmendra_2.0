@@ -780,33 +780,21 @@ public class MainController {
         fila.setPadding(new Insets(0, 6, 0, 6));
 
         String bordeInferior = ultimaFila ? "0" : "1";
-
-        fila.setStyle(
-                "-fx-border-color: #c0c0c0;" +
-                "-fx-border-width: 1 0 " + bordeInferior + " 0;" +
-                "-fx-background-color: #f4f4f4;"
-        );
+        fila.setStyle("-fx-border-color: #c0c0c0; -fx-border-width: 1 0 " 
+                + bordeInferior + " 0; -fx-background-color: #f4f4f4;");
 
         Label lblDescripcion = new Label(limpiarDescripcionParaCategoria(existencia, categoria));
         lblDescripcion.setWrapText(false);
         lblDescripcion.setMaxWidth(Double.MAX_VALUE);
-        lblDescripcion.setStyle(
-                "-fx-font-size: 15px;" +
-                "-fx-text-fill: #222222;" +
-                "-fx-padding: 2 0 2 0;"
-        );
+        lblDescripcion.setStyle("-fx-font-size: 15px; -fx-text-fill: #222222; -fx-padding: 2 0 2 0;");
 
         Label lblExistencia = new Label(formatearExistencia(existencia.getExistenciaOrZero()));
-        lblExistencia.setStyle(
-                "-fx-font-size: 15px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #222222;" +
-                "-fx-padding: 2 0 2 0;"
-        );
         lblExistencia.setAlignment(Pos.CENTER_RIGHT);
         lblExistencia.setMinWidth(46);
         lblExistencia.setPrefWidth(46);
         lblExistencia.setMaxWidth(46);
+
+        aplicarColorStock(lblDescripcion, lblExistencia, existencia, categoria);
 
         GridPane.setHgrow(lblDescripcion, Priority.ALWAYS);
 
@@ -814,8 +802,36 @@ public class MainController {
         fila.add(lblExistencia, 1, 0);
 
         return fila;
-    }
+}
+    
+    private void aplicarColorStock(Label lblExistencia, Label lblDescripcion, Existencia existencia, Categoria categoria) {
+        int existenciaActual = existencia.getExistenciaOrZero() != null
+                ? existencia.getExistenciaOrZero().intValue()
+                : 0;
 
+        Integer stockMinimo = categoria.getStockMinimo();
+        Integer stockDeseado = categoria.getStockDeseado();
+
+        String estiloBase = "-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #222222; -fx-padding: 2 6 2 6;";
+
+        if (stockMinimo == null || stockDeseado == null) {
+            lblExistencia.setStyle(estiloBase);
+            lblDescripcion.setStyle(estiloBase);
+            return;
+        }
+
+        if (existenciaActual < stockMinimo) {
+            lblExistencia.setStyle(estiloBase + "-fx-background-color: #ffb3b3;");
+            lblDescripcion.setStyle(estiloBase + "-fx-background-color: #ffb3b3;");
+        } else if (existenciaActual < stockDeseado) {
+            lblExistencia.setStyle(estiloBase + "-fx-background-color: #fff3a3;");
+            lblDescripcion.setStyle(estiloBase + "-fx-background-color: #fff3a3;");
+        } else {
+            lblExistencia.setStyle(estiloBase);
+            lblDescripcion.setStyle(estiloBase);
+        }
+    }
+    
     /**
      * Formatea la existencia numérica para presentarla en pantalla.
      */

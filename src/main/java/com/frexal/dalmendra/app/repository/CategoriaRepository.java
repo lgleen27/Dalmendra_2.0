@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.frexal.dalmendra.app.repository;
 
 import com.frexal.dalmendra.app.config.MySqlConnectionFactory;
@@ -27,7 +23,7 @@ public class CategoriaRepository {
         }
         return items;
     }
-    
+
     public List<Categoria> findActivas() throws SQLException {
         String sql = "SELECT * FROM categorias WHERE estado = 1 ORDER BY orden ASC, descripcion ASC";
         List<Categoria> items = new ArrayList<>();
@@ -52,7 +48,7 @@ public class CategoriaRepository {
     }
 
     public Categoria insert(Categoria categoria) throws SQLException {
-        String sql = "INSERT INTO categorias (descripcion, palabra_clave, orden, estado) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO categorias (descripcion, palabra_clave, orden, estado, stock_minimo, stock_deseado) VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection cn = MySqlConnectionFactory.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -61,6 +57,19 @@ public class CategoriaRepository {
             ps.setString(2, categoria.getPalabraClave());
             ps.setInt(3, categoria.getOrden() == null ? 0 : categoria.getOrden());
             ps.setBoolean(4, categoria.getEstado() != null && categoria.getEstado());
+
+            if (categoria.getStockMinimo() != null) {
+                ps.setInt(5, categoria.getStockMinimo());
+            } else {
+                ps.setNull(5, Types.INTEGER);
+            }
+
+            if (categoria.getStockDeseado() != null) {
+                ps.setInt(6, categoria.getStockDeseado());
+            } else {
+                ps.setNull(6, Types.INTEGER);
+            }
+
             ps.executeUpdate();
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -74,7 +83,7 @@ public class CategoriaRepository {
     }
 
     public Categoria update(Categoria categoria) throws SQLException {
-        String sql = "UPDATE categorias SET descripcion = ?, palabra_clave = ?, orden = ?, estado = ? WHERE id = ?";
+        String sql = "UPDATE categorias SET descripcion = ?, palabra_clave = ?, orden = ?, estado = ?, stock_minimo = ?, stock_deseado = ? WHERE id = ?";
 
         try (Connection cn = MySqlConnectionFactory.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -83,7 +92,20 @@ public class CategoriaRepository {
             ps.setString(2, categoria.getPalabraClave());
             ps.setInt(3, categoria.getOrden() == null ? 0 : categoria.getOrden());
             ps.setBoolean(4, categoria.getEstado() != null && categoria.getEstado());
-            ps.setLong(5, categoria.getId());
+
+            if (categoria.getStockMinimo() != null) {
+                ps.setInt(5, categoria.getStockMinimo());
+            } else {
+                ps.setNull(5, Types.INTEGER);
+            }
+
+            if (categoria.getStockDeseado() != null) {
+                ps.setInt(6, categoria.getStockDeseado());
+            } else {
+                ps.setNull(6, Types.INTEGER);
+            }
+
+            ps.setLong(7, categoria.getId());
             ps.executeUpdate();
         }
 
@@ -98,7 +120,7 @@ public class CategoriaRepository {
             ps.executeUpdate();
         }
     }
-    
+
     public void updateOrden(Long id, Integer orden) throws SQLException {
         String sql = "UPDATE categorias SET orden = ? WHERE id = ?";
 
@@ -117,6 +139,8 @@ public class CategoriaRepository {
         c.setPalabraClave(rs.getString("palabra_clave"));
         c.setOrden(rs.getInt("orden"));
         c.setEstado(rs.getBoolean("estado"));
+        c.setStockMinimo((Integer) rs.getObject("stock_minimo"));
+        c.setStockDeseado((Integer) rs.getObject("stock_deseado"));
         return c;
     }
 }

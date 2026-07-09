@@ -11,6 +11,8 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Tooltip?>
+<?import javafx.scene.shape.SVGPath?>
 
 <BorderPane xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.frexal.dalmendra.app.ui.existencias.ExistenciasController"
@@ -24,14 +26,63 @@
             </padding>
 
             <ToolBar>
-                <Button fx:id="btnCancelar" text="Cancelar" onAction="#onCancelar"/>
-                <Button fx:id="btnOrdenar" text="Ordenar" onAction="#onOrdenar"/>
-                <Button fx:id="btnInicio" text="Inicio" onAction="#onInicio"/>
-                <Button fx:id="btnSubir" text="Subir" onAction="#onSubir"/>
-                <Button fx:id="btnBajar" text="Bajar" onAction="#onBajar"/>
-                <Button fx:id="btnFinal" text="Final" onAction="#onFinal"/>
-                <Button fx:id="btnGuardar" text="Guardar" onAction="#onGuardar"/>
-                <Button fx:id="btnCerrar" text="Cerrar" onAction="#onCerrar"/>
+                <Button fx:id="btnCancelar" text="" onAction="#onCancelar" prefWidth="34.0" prefHeight="34.0" minWidth="34.0" minHeight="34.0" maxWidth="34.0" maxHeight="34.0" disable="true" contentDisplay="GRAPHIC_ONLY">
+                    <graphic>
+                        <SVGPath content="M 1.4485298,39.349216 -7.522156e-4,37.999435 8.7873464,29.12685 17.487785,20.341924 8.743893,11.513123 0,2.6843215 1.6091073,1.3421608 3.2182146,0 12.114982,8.9001127 21.01175,17.800225 29.908518,8.9001127 38.805286,0 l 1.609107,1.3421608 1.609107,1.3421607 -8.743893,8.8288015 -8.743892,8.828801 8.743892,8.828801 8.743893,8.828801 -1.609107,1.342161 -1.609107,1.342161 -8.896768,-8.900113 -8.896768,-8.900112 -8.725871,8.72915 L 3.018,40.684 Z"
+                                 scaleX="0.65" scaleY="0.65" />
+                    </graphic>
+                    <tooltip><Tooltip text="Cancelar" /></tooltip>
+                </Button>
+
+                <Button fx:id="btnOrdenar" text="" onAction="#onOrdenar" prefWidth="34.0" prefHeight="34.0" minWidth="34.0" minHeight="34.0" maxWidth="34.0" maxHeight="34.0" contentDisplay="GRAPHIC_ONLY">
+                    <graphic>
+                        <SVGPath content="M 0,28 V 16 H 20 40 V 28 40 H 20 0 Z m 36,0 V 20 H 20 4 v 8 8 H 20 36 Z M 10,26 v -2 h 10 10 v 2 2 H 20 10 Z M 4,10 V 8 h 16 16 v 2 2 H 20 4 Z M 8,2 V 0 H 20 32 V 2 4 H 20 8 Z"
+                                 scaleX="0.65" scaleY="0.65" />
+                    </graphic>
+                    <tooltip><Tooltip text="Ordenar" /></tooltip>
+                </Button>
+
+                <Button fx:id="btnInicio" text="" onAction="#onInicio" prefWidth="34.0" prefHeight="34.0" minWidth="34.0" minHeight="34.0" maxWidth="34.0" maxHeight="34.0" disable="true" contentDisplay="GRAPHIC_ONLY">
+                    <graphic>
+                        <SVGPath content="M 0.762554,23.582042 0,22.348203 l 6.606779,-6.507435 6.606779,-6.5074343 6.606779,6.5074343 6.606779,6.507435 -0.762555,1.233839 -0.762554,1.233839 -5.844225,-5.735674 -5.844224,-5.735672 -5.844225,5.735672 -5.844225,5.735674 z m 0,-9.333334 L 0,13.014869 6.606779,6.5074343 13.213558,0 19.820337,6.5074343 26.427116,13.014869 25.664561,14.248708 24.902007,15.482547 19.057782,9.7468734 13.213558,4.0112007 7.369333,9.7468734 1.525108,15.482547 Z"
+                                 scaleX="1" scaleY="1" />
+                    </graphic>
+                    <tooltip><Tooltip text="Inicio" /></tooltip>
+                </Button>
+
+                <Button fx:id="btnSubir" text="" onAction="#onSubir" prefWidth="34.0" prefHeight="34.0" minWidth="34.0" minHeight="34.0" maxWidth="34.0" maxHeight="34.0" disable="true" contentDisplay="GRAPHIC_ONLY">
+                    <graphic>
+                        <SVGPath content="m 12.501524,2.4973377 2.344156,2.4967772 -0.646641,0.6462454 -0.646644,0.6462443 -1.523777,-1.2654132 -1.523776,-1.2654133 -0.0012,4.064946 -0.08367,4.6116689 4.497025,0.01546 4.08521,0.05539 -0.0011,3.499998 -0.0011,3.500002 -9.5000067,-0.0029 L 0,19.497443 l 0.0010652,-3.49996 0.0010754,-3.5 4.2981517,0.04699 4.0850948,0.01152 L 8.5035879,7.8201074 8.5048369,3.7551617 6.9802824,5.0196384 5.4557277,6.284115 4.8094825,5.6374734 4.163238,4.9908309 6.5089279,2.4954944 8.8546187,1.5796143e-4 9.5059944,3.5809432e-4 10.157367,5.5822727e-4 Z M 1.5010781,15.997904 l -6.122e-4,1.999998 8.0000004,0.0025 8.0000007,0.0025 6.32e-4,-1.999998 6.32e-4,-2.000001 -7.9999996,-0.0025 -8.0000005,-0.0025 z"
+                                 scaleX="1.35" scaleY="1.35" />
+                    </graphic>
+                    <tooltip><Tooltip text="Subir" /></tooltip>
+                </Button>
+
+                <Button fx:id="btnBajar" text="" onAction="#onBajar" prefWidth="34.0" prefHeight="34.0" minWidth="34.0" minHeight="34.0" maxWidth="34.0" maxHeight="34.0" disable="true" contentDisplay="GRAPHIC_ONLY">
+                    <graphic>
+                        <SVGPath content="m 6.5063212,17.006977 -2.344923,-2.496057 0.646443,-0.646444 0.646444,-0.646443 1.524166,1.264945 1.524166,1.264945 v -4.064946 l 0.08226,-4.6116934 -4.49703,-0.014109 -4.08522708,-0.05414 v -3.5 -3.49999999 H 9.5026202 19.002621 v 3.49999999 3.5 l -4.298166,-0.045679 -4.085098,-0.010296 -0.116736,4.7359194 v 4.064946 l 1.524166,-1.264945 1.524166,-1.264945 0.646444,0.646443 0.646443,0.646444 -2.344923,2.496057 -2.344924,2.496057 H 9.5026172 8.8512452 Z M 17.502618,3.5030338 v -2 h -8.0000008 -8 v 2 2 h 8 8.0000008 z"
+                                 scaleX="1.35" scaleY="1.35" />
+                    </graphic>
+                    <tooltip><Tooltip text="Bajar" /></tooltip>
+                </Button>
+
+                <Button fx:id="btnFinal" text="" onAction="#onFinal" prefWidth="34.0" prefHeight="34.0" minWidth="34.0" minHeight="34.0" maxWidth="34.0" maxHeight="34.0" disable="true" contentDisplay="GRAPHIC_ONLY">
+                    <graphic>
+                        <SVGPath content="M 5.640981,16.979001 0,11.23126 0.948963,10.282297 1.897926,9.3333335 l 5.747741,5.6409815 5.747741,5.640982 5.747742,-5.640982 5.74774,-5.6409815 0.948963,0.9489635 0.948962,0.948963 -5.64098,5.747741 -5.640982,5.747741 h -2.111445 -2.111446 z m 0,-9.3333342 L 0,1.8979257 0.948963,0.94896293 1.897926,0 7.645667,5.6409811 13.393408,11.281963 19.14115,5.6409811 24.88889,0 l 0.948963,0.94896293 0.948962,0.94896277 -5.64098,5.7477411 -5.640982,5.7477412 h -2.111445 -2.111446 z"
+                                 scaleX="1" scaleY="1" />
+                    </graphic>
+                    <tooltip><Tooltip text="Final" /></tooltip>
+                </Button>
+                
+                <Button fx:id="btnGuardar" text="" onAction="#onGuardar" prefWidth="34.0" prefHeight="34.0" minWidth="34.0" minHeight="34.0" maxWidth="34.0" maxHeight="34.0" disable="true" contentDisplay="GRAPHIC_ONLY">
+                    <graphic>
+                        <SVGPath content="M 1.2,38.8 0,37.6 V 25.021112 12.442223 L 6.276906,6.2211117 12.553811,0 H 26.07691 39.6 L 40.8,1.2 42,2.4 V 20 37.6 L 40.8,38.8 39.6,40 H 21 2.4 Z M 37.5,20.013695 V 3.9045334 H 35.88184 L 34.263279,3.90413 V 7.9575334 12.93455 l -1.815719,1.564983 -1.94756,1.47 -9.5,-1.59e-4 -9.5,1.59e-4 -1.115219,-0.735 -0.882502,-0.735 V 12.176973 8.2495334 L 5.909435,11.581961 4,13.309975 V 23.988321 34.666667 L 4.690525,35.357191 5.38105,36.047716 21.44053,35.773858 37.5,35.5 Z M 9,30 v -2 h 12 12 v 2 2 H 21 9 Z m 0,-8 v -2 h 12 12 v 2 2 H 21 9 Z M 30.53277,7.9575334 v -4.053 H 21.25 12.202279 v 4.345 3.7499996 L 20.93964,12 30.53277,11.999533 Z M 15,7.9999994 v -2 h 1.5 1.5 v 2 2 H 16.5 15 Z"
+                                 scaleX="0.65" scaleY="0.65" />
+                    </graphic>
+                    <tooltip><Tooltip text="Guardar" /></tooltip>
+                </Button>
+                
+                <Button fx:id="btnCerrar" text="Cerrar" onAction="#onCerrar" prefWidth="70.0"/>
             </ToolBar>
 
             <HBox spacing="10.0" alignment="CENTER_LEFT">

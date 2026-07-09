@@ -1,5 +1,6 @@
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/model/Categoria.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/service/SqlServerSucursalClient.java
+/home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/ui/categorias/StockCategoriaController.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/config/MySqlSchemaInitializer.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/model/OrdenExistencia.java
 /home/lgleen27/NetBeansProjects/dalmendra-app/src/main/java/com/frexal/dalmendra/app/ui/config/ConfiguracionController.java
