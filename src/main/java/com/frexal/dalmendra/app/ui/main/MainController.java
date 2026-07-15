@@ -15,9 +15,13 @@ import com.frexal.dalmendra.app.service.OrdenExistenciaService;
 import com.frexal.dalmendra.app.service.SqlServerSucursalClient;
 import com.frexal.dalmendra.app.service.SucursalService;
 import com.frexal.dalmendra.app.service.SyncSchedulerService;
+import com.frexal.dalmendra.app.service.ReporteCategoriasDataService;
+import com.frexal.dalmendra.app.service.ReporteCategoriasJsonService;
 import com.frexal.dalmendra.app.ui.config.ConfiguracionController;
 import com.frexal.dalmendra.app.ui.existencias.ExistenciasController;
 import com.frexal.dalmendra.app.ui.sucursales.SucursalesController;
+import com.frexal.dalmendra.app.dto.reporte.ReporteCategoriasJsonDto;
+import com.frexal.dalmendra.app.service.ReporteCategoriasApiClient;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -53,10 +57,11 @@ import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
+import com.frexal.dalmendra.app.service.ReporteCategoriasJsonService;
 
 /**
  * Controlador principal de la ventana principal de Dalmendra.
@@ -474,8 +479,10 @@ public class MainController {
 
                     if (appState.getSucursalSeleccionada() != null) {
                         lblEstado.setText("Existencias actualizadas - " + appState.getSucursalSeleccionada().getNombreSucursal());
+                        probarGeneracionJsonReal();
                     } else {
                         lblEstado.setText("Existencias actualizadas");
+                        probarGeneracionJsonReal();
                     }
                 });
 
@@ -1291,5 +1298,41 @@ public class MainController {
         }
 
         return table;
+    }
+    
+    private void probarGeneracionJsonReal() {
+        try {
+            ReporteCategoriasDataService dataService = new ReporteCategoriasDataService(
+                    sucursalRepository,
+                    categoriaRepository,
+                    existenciaRepository
+            );
+
+            ReporteCategoriasJsonDto reporte = dataService.construirReporteCompleto();
+
+            ReporteCategoriasJsonService jsonService = new ReporteCategoriasJsonService();
+            jsonService.guardarJsonDto(reporte, "reportes/reporte_categorias.json");
+
+            System.out.println("JSON real generado correctamente.");
+            probarEnvioJsonALaravelLocal();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private void probarEnvioJsonALaravelLocal() {
+        try {
+            ReporteCategoriasApiClient apiClient = new ReporteCategoriasApiClient();
+
+            String respuesta = apiClient.enviarJson(
+                    "http://127.0.0.1:8000/api/reporte-categorias",
+                    "token_local_dalmendra_2026",
+                    "reportes/reporte_categorias.json"
+            );
+
+            System.out.println("Respuesta Laravel: " + respuesta);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

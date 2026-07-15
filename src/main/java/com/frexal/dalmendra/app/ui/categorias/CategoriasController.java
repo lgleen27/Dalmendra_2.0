@@ -363,7 +363,7 @@ public class CategoriasController {
         grid.setPadding(new Insets(15));
 
         Label lblMinimo = new Label("Stock mínimo:");
-        Label lblMaximo = new Label("Stock máximo:");
+        Label lblMaximo = new Label("Stock deseado:");
         TextField txtMinimo = new TextField();
         TextField txtMaximo = new TextField();
 
