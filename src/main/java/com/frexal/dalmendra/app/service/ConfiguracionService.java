@@ -28,6 +28,18 @@ public class ConfiguracionService {
         configuracionRepository.upsert(descripcion, valor);
         actualizarEstado(descripcion, valor);
     }
+    
+    public String getValorConfiguracion(String descripcion) throws SQLException {
+        List<Configuracion> configuraciones = configuracionRepository.findAll();
+
+        for (Configuracion config : configuraciones) {
+            if (config.getDescripcion() != null && config.getDescripcion().equalsIgnoreCase(descripcion)) {
+                return config.getValor();
+            }
+        }
+
+        return "";
+    }
 
     public int convertirMinutosAMilisegundos(int minutos) {
         return minutos * 60000;

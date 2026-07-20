@@ -1,12 +1,12 @@
 {
-  "fechaGeneracion" : "2026-07-14T15:43:59.221676",
+  "fechaGeneracion" : "2026-07-19T21:47:04.624885863",
   "origen" : "reporte_categorias",
   "totalSucursales" : 1,
   "sucursales" : [ {
     "sucursalId" : 17,
     "sucursalNombre" : "RubenDario-PuntoB",
     "activa" : true,
-    "ultimaSincronizacionCorrecta" : "2026-07-14T15:43:59.223154963",
+    "ultimaSincronizacionCorrecta" : "2026-07-19T21:47:04.632042571",
     "totalCategorias" : 11,
     "totalProductos" : 63,
     "categorias" : [ {
@@ -17,103 +17,101 @@
       "stockDeseado" : 5,
       "totalProductos" : 8,
       "productos" : [ {
-        "existenciaId" : 640604,
-        "codigo" : "010031",
-        "descripcion" : "MINI CHEESECAKE BROWNIE",
-        "existencia" : 8.0000,
-        "estadoStock" : "NORMAL"
+        "existenciaId" : 675123,
+        "codigo" : "008211",
+        "descripcion" : "MINI ESPRESSO",
+        "existencia" : 2.0000,
+        "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640704,
+        "existenciaId" : 674906,
         "codigo" : "010084",
         "descripcion" : "MINI CHEESECAKE PLATANO",
         "existencia" : 3.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640780,
+        "existenciaId" : 674806,
+        "codigo" : "010031",
+        "descripcion" : "MINI CHEESECAKE BROWNIE",
+        "existencia" : 5.0000,
+        "estadoStock" : "NORMAL"
+      }, {
+        "existenciaId" : 674982,
         "codigo" : "010122",
         "descripcion" : "MINI CHEESECAKE NUEZ",
-        "existencia" : 3.0000,
+        "existencia" : 2.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640891,
+        "existenciaId" : 675093,
         "codigo" : "010166",
         "descripcion" : "MINI OREO",
-        "existencia" : -2.0000,
-        "estadoStock" : "MINIMO_CRITICO"
+        "existencia" : 5.0000,
+        "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640727,
+        "existenciaId" : 674929,
         "codigo" : "010089",
         "descripcion" : "MINI BRUCE",
         "existencia" : 5.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640740,
+        "existenciaId" : 674942,
         "codigo" : "010099",
         "descripcion" : "MINI VAINILLA FRUTOS",
-        "existencia" : 3.0000,
+        "existencia" : 4.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640816,
+        "existenciaId" : 675018,
         "codigo" : "010138",
         "descripcion" : "MINI VAINILLA SIN LACTEOS",
-        "existencia" : 3.0000,
-        "estadoStock" : "MINIMO_CRITICO"
-      }, {
-        "existenciaId" : 640921,
-        "codigo" : "008211",
-        "descripcion" : "MINI ESPRESSO",
-        "existencia" : 0.0000,
+        "existencia" : 2.0000,
         "estadoStock" : "MINIMO_CRITICO"
       } ]
     }, {
       "categoriaId" : 30,
       "nombre" : "GALLETAS",
       "palabraClave" : "GTA.",
-      "stockMinimo" : 10,
-      "stockDeseado" : 30,
       "totalProductos" : 7,
       "productos" : [ {
-        "existenciaId" : 640707,
+        "existenciaId" : 674909,
         "codigo" : "010086",
         "descripcion" : "GTA. CANELITAS",
-        "existencia" : 31.0000,
+        "existencia" : 29.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640615,
+        "existenciaId" : 674817,
         "codigo" : "010009",
         "descripcion" : "GTA. CHOCOCHIPS",
-        "existencia" : 23.0000,
-        "estadoStock" : "BAJO_DESEADO"
+        "existencia" : 12.0000,
+        "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640702,
+        "existenciaId" : 674904,
         "codigo" : "010085",
         "descripcion" : "GTA. DOBLE CHOCOLATE",
-        "existencia" : 6.0000,
-        "estadoStock" : "MINIMO_CRITICO"
+        "existencia" : 7.0000,
+        "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640619,
+        "existenciaId" : 674821,
         "codigo" : "010011",
         "descripcion" : "GTA. POLVORONES",
-        "existencia" : 48.0000,
+        "existencia" : 27.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640753,
+        "existenciaId" : 674955,
         "codigo" : "010105",
         "descripcion" : "GTA. TARTALETAS FRESA",
-        "existencia" : 34.0000,
+        "existencia" : 22.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640790,
+        "existenciaId" : 674992,
         "codigo" : "010129",
         "descripcion" : "GTA. ALFAJORES",
-        "existencia" : 18.0000,
-        "estadoStock" : "BAJO_DESEADO"
+        "existencia" : 27.0000,
+        "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640864,
+        "existenciaId" : 675066,
         "codigo" : "010154",
         "descripcion" : "GTA. MINI WAFFLES",
         "existencia" : 5.0000,
-        "estadoStock" : "MINIMO_CRITICO"
+        "estadoStock" : "NORMAL"
       } ]
     }, {
       "categoriaId" : 31,
@@ -123,53 +121,53 @@
       "stockDeseado" : 15,
       "totalProductos" : 8,
       "productos" : [ {
-        "existenciaId" : 640606,
+        "existenciaId" : 674808,
         "codigo" : "010029",
         "descripcion" : "PZA. NAPOLITANO",
-        "existencia" : 13.0000,
+        "existencia" : 10.0000,
         "estadoStock" : "BAJO_DESEADO"
       }, {
-        "existenciaId" : 640696,
+        "existenciaId" : 674898,
         "codigo" : "010083",
         "descripcion" : "PZA. BROWNIE",
-        "existencia" : 22.0000,
+        "existencia" : 24.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640600,
+        "existenciaId" : 674802,
         "codigo" : "010027",
         "descripcion" : "PZA. DONA CHOCOLATE",
-        "existencia" : 2.0000,
+        "existencia" : 3.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640599,
+        "existenciaId" : 674801,
         "codigo" : "010028",
         "descripcion" : "PZA. DONA CANELA",
-        "existencia" : 2.0000,
+        "existencia" : 3.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640761,
+        "existenciaId" : 674963,
         "codigo" : "010108",
         "descripcion" : "PZA. GANSITO",
-        "existencia" : 26.0000,
+        "existencia" : 18.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640762,
+        "existenciaId" : 674964,
         "codigo" : "010109",
         "descripcion" : "PZA. PINGUINO",
-        "existencia" : 30.0000,
-        "estadoStock" : "NORMAL"
-      }, {
-        "existenciaId" : 640819,
-        "codigo" : "010139",
-        "descripcion" : "PZA. CAKE POPS CHOCOLATE",
         "existencia" : 19.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640789,
+        "existenciaId" : 675021,
+        "codigo" : "010139",
+        "descripcion" : "PZA. CAKE POPS CHOCOLATE",
+        "existencia" : 17.0000,
+        "estadoStock" : "NORMAL"
+      }, {
+        "existenciaId" : 674991,
         "codigo" : "010128",
         "descripcion" : "PZA. PINGUINO CHOCO",
-        "existencia" : 0.0000,
-        "estadoStock" : "MINIMO_CRITICO"
+        "existencia" : 11.0000,
+        "estadoStock" : "BAJO_DESEADO"
       } ]
     }, {
       "categoriaId" : 29,
@@ -179,47 +177,47 @@
       "stockDeseado" : 20,
       "totalProductos" : 7,
       "productos" : [ {
-        "existenciaId" : 640895,
+        "existenciaId" : 675097,
         "codigo" : "010168",
         "descripcion" : "ROL. ROLES CANELA",
-        "existencia" : 11.0000,
+        "existencia" : 14.0000,
         "estadoStock" : "BAJO_DESEADO"
       }, {
-        "existenciaId" : 640896,
+        "existenciaId" : 675098,
         "codigo" : "010169",
         "descripcion" : "ROL. EXTRA CAJETA",
-        "existencia" : 11.0000,
+        "existencia" : 17.0000,
         "estadoStock" : "BAJO_DESEADO"
       }, {
-        "existenciaId" : 640905,
+        "existenciaId" : 675107,
         "codigo" : "010170",
         "descripcion" : "ROL. GLASS",
-        "existencia" : 8.0000,
-        "estadoStock" : "MINIMO_CRITICO"
+        "existencia" : 24.0000,
+        "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640911,
+        "existenciaId" : 675113,
         "codigo" : "010174",
         "descripcion" : "ROL. GANACHE EXTRA",
         "existencia" : 18.0000,
         "estadoStock" : "BAJO_DESEADO"
       }, {
-        "existenciaId" : 640914,
+        "existenciaId" : 675116,
         "codigo" : "010177",
         "descripcion" : "ROL. BROWNIE EXTRA",
         "existencia" : 6.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640912,
+        "existenciaId" : 675114,
         "codigo" : "010175",
         "descripcion" : "ROL. MERMELADA EXTRA",
         "existencia" : 21.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640913,
+        "existenciaId" : 675115,
         "codigo" : "010176",
         "descripcion" : "ROL. MIEL MAPLE",
-        "existencia" : 20.0000,
-        "estadoStock" : "NORMAL"
+        "existencia" : 17.0000,
+        "estadoStock" : "BAJO_DESEADO"
       } ]
     }, {
       "categoriaId" : 35,
@@ -229,34 +227,34 @@
       "stockDeseado" : 10,
       "totalProductos" : 5,
       "productos" : [ {
-        "existenciaId" : 640624,
+        "existenciaId" : 674826,
         "codigo" : "010049",
         "descripcion" : "REBP. VAINILLA FRUTOS",
-        "existencia" : 12.0000,
-        "estadoStock" : "NORMAL"
+        "existencia" : 2.0000,
+        "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640623,
+        "existenciaId" : 674825,
         "codigo" : "010051",
         "descripcion" : "REBP. PASTEL CHOCORROL",
-        "existencia" : 10.0000,
+        "existencia" : 19.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640625,
+        "existenciaId" : 674827,
         "codigo" : "010052",
         "descripcion" : "REBP. PASTEL MOKA",
         "existencia" : 3.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640741,
+        "existenciaId" : 674943,
         "codigo" : "010097",
         "descripcion" : "REBP. RED VELVET",
         "existencia" : 12.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640825,
+        "existenciaId" : 675027,
         "codigo" : "010144",
         "descripcion" : "REBP. TRES LECHES CAJETA",
-        "existencia" : 15.0000,
+        "existencia" : 11.0000,
         "estadoStock" : "NORMAL"
       } ]
     }, {
@@ -267,31 +265,31 @@
       "stockDeseado" : 10,
       "totalProductos" : 5,
       "productos" : [ {
-        "existenciaId" : 640693,
+        "existenciaId" : 674895,
         "codigo" : "010081",
         "descripcion" : "REB. CHEESECAKE NATURAL",
-        "existencia" : 22.0000,
+        "existencia" : 32.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640626,
+        "existenciaId" : 674828,
         "codigo" : "008097",
         "descripcion" : "REB. PAY LIMON",
-        "existencia" : 12.0000,
-        "estadoStock" : "NORMAL"
-      }, {
-        "existenciaId" : 640621,
-        "codigo" : "008100",
-        "descripcion" : "REB. GUAYABA",
         "existencia" : 11.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640630,
+        "existenciaId" : 674823,
+        "codigo" : "008100",
+        "descripcion" : "REB. GUAYABA",
+        "existencia" : 16.0000,
+        "estadoStock" : "NORMAL"
+      }, {
+        "existenciaId" : 674832,
         "codigo" : "010056",
         "descripcion" : "REB. NUEZ REBANADAS",
-        "existencia" : 5.0000,
+        "existencia" : 3.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640720,
+        "existenciaId" : 674922,
         "codigo" : "010087",
         "descripcion" : "REB. NUEZ COMPLETO",
         "existencia" : 1.0000,
@@ -305,13 +303,13 @@
       "stockDeseado" : 5,
       "totalProductos" : 2,
       "productos" : [ {
-        "existenciaId" : 640873,
+        "existenciaId" : 675075,
         "codigo" : "010159",
         "descripcion" : "GL. GELATINA YOGURTH",
         "existencia" : 2.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640872,
+        "existenciaId" : 675074,
         "codigo" : "008184",
         "descripcion" : "GL. GELATINA INDV. YOGURTH",
         "existencia" : 6.0000,
@@ -325,16 +323,16 @@
       "stockDeseado" : 5,
       "totalProductos" : 2,
       "productos" : [ {
-        "existenciaId" : 640672,
+        "existenciaId" : 674874,
         "codigo" : "008102",
         "descripcion" : "ENV. CAJETA KETO",
-        "existencia" : 4.0000,
-        "estadoStock" : "MINIMO_CRITICO"
+        "existencia" : 5.0000,
+        "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640710,
+        "existenciaId" : 674912,
         "codigo" : "010070",
         "descripcion" : "ENV. NUECES GARAPIÑADA",
-        "existencia" : 8.0000,
+        "existencia" : 11.0000,
         "estadoStock" : "NORMAL"
       } ]
     }, {
@@ -345,64 +343,64 @@
       "stockDeseado" : 3,
       "totalProductos" : 10,
       "productos" : [ {
-        "existenciaId" : 640595,
+        "existenciaId" : 674797,
         "codigo" : "010057",
         "descripcion" : "SLD. CHAPATAS PARMESANO",
         "existencia" : 2.0000,
         "estadoStock" : "BAJO_DESEADO"
       }, {
-        "existenciaId" : 640594,
+        "existenciaId" : 674796,
         "codigo" : "010058",
         "descripcion" : "SLD. CHAPATAS HIERBAS ITALIANAS",
         "existencia" : 2.0000,
         "estadoStock" : "BAJO_DESEADO"
       }, {
-        "existenciaId" : 640612,
+        "existenciaId" : 674814,
         "codigo" : "010060",
         "descripcion" : "SLD. PIEZA BUN",
-        "existencia" : 12.0000,
+        "existencia" : 7.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640736,
+        "existenciaId" : 674938,
         "codigo" : "01092",
         "descripcion" : "SLD. BISQUETS",
         "existencia" : 8.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640632,
+        "existenciaId" : 674834,
         "codigo" : "010061",
         "descripcion" : "SLD. TAMALES ROJOS",
-        "existencia" : 4.0000,
+        "existencia" : 5.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640640,
+        "existenciaId" : 674842,
         "codigo" : "010062",
         "descripcion" : "SLD. TAMALES VERDES",
         "existencia" : 4.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640631,
+        "existenciaId" : 674833,
         "codigo" : "010063",
         "descripcion" : "SLD. TAMALES RAJAS",
         "existencia" : 3.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640757,
+        "existenciaId" : 674959,
         "codigo" : "008120",
         "descripcion" : "SLD. TAMALES CHICHARRON",
         "existencia" : 3.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640739,
+        "existenciaId" : 674941,
         "codigo" : "010094",
         "descripcion" : "SLD. TORTILLA CHICA",
         "existencia" : 0.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640743,
+        "existenciaId" : 674945,
         "codigo" : "010100",
         "descripcion" : "SLD. TORTILLA GRANDE",
-        "existencia" : 4.0000,
+        "existencia" : 3.0000,
         "estadoStock" : "NORMAL"
       } ]
     }, {
@@ -411,19 +409,19 @@
       "palabraClave" : "COMP.",
       "totalProductos" : 3,
       "productos" : [ {
-        "existenciaId" : 640649,
+        "existenciaId" : 674851,
         "codigo" : "008091",
         "descripcion" : "COMP. VAINILLA CHICO",
         "existencia" : 1.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640661,
+        "existenciaId" : 674863,
         "codigo" : "008092",
         "descripcion" : "COMP. CHOCORROL CHICO",
-        "existencia" : 2.0000,
+        "existencia" : 1.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640742,
+        "existenciaId" : 674944,
         "codigo" : "010098",
         "descripcion" : "COMP. RED VELVET CHICO",
         "existencia" : 1.0000,
@@ -437,37 +435,37 @@
       "stockDeseado" : 3,
       "totalProductos" : 6,
       "productos" : [ {
-        "existenciaId" : 640637,
+        "existenciaId" : 674839,
         "codigo" : "008041",
         "descripcion" : "EMP. KILO HARINA ALMENDRA",
         "existencia" : 3.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640671,
+        "existenciaId" : 674873,
         "codigo" : "008042",
         "descripcion" : "EMP. KILO ERITRITOL",
         "existencia" : 2.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640869,
+        "existenciaId" : 675071,
         "codigo" : "008182",
         "descripcion" : "EMP. ALULOSA KILO",
         "existencia" : 2.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640705,
+        "existenciaId" : 674907,
         "codigo" : "008106",
         "descripcion" : "EMP. COCOA 250GRS",
         "existencia" : 3.0000,
         "estadoStock" : "NORMAL"
       }, {
-        "existenciaId" : 640674,
+        "existenciaId" : 674876,
         "codigo" : "008080",
         "descripcion" : "EMP. PSILLYUM 500GRS",
-        "existencia" : 2.0000,
+        "existencia" : 1.0000,
         "estadoStock" : "MINIMO_CRITICO"
       }, {
-        "existenciaId" : 640701,
+        "existenciaId" : 674903,
         "codigo" : "008078",
         "descripcion" : "EMP. GOMA XANTANA 250GRS",
         "existencia" : 2.0000,

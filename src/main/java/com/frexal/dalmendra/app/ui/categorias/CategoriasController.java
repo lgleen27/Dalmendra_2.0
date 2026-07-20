@@ -30,6 +30,8 @@ public class CategoriasController {
     @FXML private TextField txtDescripcion;
     @FXML private TextField txtPalabraClave;
     @FXML private CheckBox ckbEstado;
+    @FXML private Label txtStockDeseado;
+    @FXML private Label txtStockMinimo;
 
     @FXML private TableView<Categoria> tblCategorias;
     @FXML private TableColumn<Categoria, Long> colId;
@@ -112,6 +114,9 @@ public class CategoriasController {
         txtDescripcion.setText(categoria.getDescripcion() == null ? "" : categoria.getDescripcion());
         txtPalabraClave.setText(categoria.getPalabraClave() == null ? "" : categoria.getPalabraClave());
         ckbEstado.setSelected(Boolean.TRUE.equals(categoria.getEstado()));
+
+        txtStockMinimo.setText(categoria.getStockMinimo() == null ? "" : String.valueOf(categoria.getStockMinimo()));
+        txtStockDeseado.setText(categoria.getStockDeseado() == null ? "" : String.valueOf(categoria.getStockDeseado()));
     }
 
     private void habilitarCampos() {
@@ -149,6 +154,8 @@ public class CategoriasController {
         txtDescripcion.clear();
         txtPalabraClave.clear();
         ckbEstado.setSelected(true);
+        txtStockMinimo.setText("");
+        txtStockDeseado.setText("");
         status = "0";
     }
 

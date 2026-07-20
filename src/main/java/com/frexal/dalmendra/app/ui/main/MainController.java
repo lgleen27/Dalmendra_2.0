@@ -160,7 +160,7 @@ public class MainController {
      * Alerta reutilizable para errores de sincronización.
      * Se mantiene una sola instancia para evitar que se acumulen varias ventanas.
      */
-    private Alert alertErroresSync;
+    //private Alert alertErroresSync;
 
     /**
      * Temporizador que cierra automáticamente la alerta de errores de sincronización
@@ -446,6 +446,10 @@ public class MainController {
      * - Si la sincronización fue correcta, actualiza la última fecha visible.
      */
     private void actualizarExistencias() {
+        if (!appState.isBanActualizacion()) {
+            return;
+        }
+
         if (sincronizando) {
             return;
         }
@@ -470,22 +474,21 @@ public class MainController {
 
                     if (appState.isHayErrorSincronizacion()) {
                         lblSync.setText("Con errores");
-                        mostrarErroresSincronizacionNoBloqueante(appState.getErroresSincronizacion());
+                        //mostrarErroresSincronizacionNoBloqueante(appState.getErroresSincronizacion());
                     } else {
                         lblSync.setText("Correcta");
-                    }
+                        abrirReporteInicial();
 
-                    abrirReporteInicial();
-
-                    if (appState.getSucursalSeleccionada() != null) {
-                        lblEstado.setText("Existencias actualizadas - " + appState.getSucursalSeleccionada().getNombreSucursal());
-                        probarGeneracionJsonReal();
-                    } else {
-                        lblEstado.setText("Existencias actualizadas");
-                        probarGeneracionJsonReal();
+                        if (appState.getSucursalSeleccionada() != null) {
+                            lblEstado.setText("Existencias actualizadas - "
+                                    + appState.getSucursalSeleccionada().getNombreSucursal());
+                            probarGeneracionJsonReal();
+                        } else {
+                            lblEstado.setText("Existencias actualizadas");
+                            probarGeneracionJsonReal();
+                        }
                     }
                 });
-
             } catch (Exception ex) {
                 Platform.runLater(() -> {
                     lblSync.setText("Error");
@@ -557,10 +560,7 @@ public class MainController {
     @FXML
     private void onSucursales() {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/frexal/dalmendra/app/ui/sucursales/SucursalesView.fxml")
-            );
-
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/frexal/dalmendra/app/ui/sucursales/SucursalesView.fxml"));
             Parent view = loader.load();
 
             SucursalesController controller = loader.getController();
@@ -574,6 +574,9 @@ public class MainController {
             stage.setScene(new Scene(view));
             stage.sizeToScene();
             stage.centerOnScreen();
+
+            configurarPausaSincronizacionEnVentana(stage);
+
             stage.showAndWait();
 
             sucursalService.cargarSucursales();
@@ -600,10 +603,7 @@ public class MainController {
     @FXML
     private void onCategorias() {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/frexal/dalmendra/app/ui/categorias/CategoriasView.fxml")
-            );
-
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/frexal/dalmendra/app/ui/categorias/CategoriasView.fxml"));
             Parent view = loader.load();
 
             Stage stage = new Stage();
@@ -614,6 +614,9 @@ public class MainController {
             stage.setScene(new Scene(view));
             stage.sizeToScene();
             stage.centerOnScreen();
+
+            configurarPausaSincronizacionEnVentana(stage);
+
             stage.showAndWait();
 
             lblEstado.setText("Catálogo de categorías cerrado");
@@ -627,10 +630,7 @@ public class MainController {
     @FXML
     private void onArticulos() {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/frexal/dalmendra/app/ui/existencias/ExistenciasView.fxml")
-            );
-
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/frexal/dalmendra/app/ui/existencias/ExistenciasView.fxml"));
             Parent view = loader.load();
 
             ExistenciasController controller = loader.getController();
@@ -644,6 +644,9 @@ public class MainController {
             stage.setScene(new Scene(view));
             stage.sizeToScene();
             stage.centerOnScreen();
+
+            configurarPausaSincronizacionEnVentana(stage);
+
             stage.showAndWait();
 
             lblEstado.setText("Catálogo de existencias cerrado");
@@ -665,10 +668,7 @@ public class MainController {
      */
     private void abrirVistaConfiguracion() {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/frexal/dalmendra/app/ui/config/ConfiguracionView.fxml")
-            );
-
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/frexal/dalmendra/app/ui/config/ConfiguracionView.fxml"));
             Parent view = loader.load();
 
             ConfiguracionController controller = loader.getController();
@@ -689,6 +689,9 @@ public class MainController {
             stage.setScene(scene);
             stage.sizeToScene();
             stage.centerOnScreen();
+
+            configurarPausaSincronizacionEnVentana(stage);
+
             stage.showAndWait();
 
         } catch (Exception ex) {
@@ -730,7 +733,7 @@ public class MainController {
         columna.setAlignment(Pos.TOP_LEFT);
         columna.setFillWidth(true);
         columna.setMaxWidth(Double.MAX_VALUE);
-        columna.setPrefWidth(420);
+        columna.setPrefWidth(300);
         return columna;
     }
 
@@ -757,7 +760,7 @@ public class MainController {
         Label titulo = new Label(valor(categoria.getDescripcion()).toUpperCase());
         titulo.setMaxWidth(Double.MAX_VALUE);
         titulo.setStyle(
-                "-fx-font-size: 18px;" +
+                "-fx-font-size: 25px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #2c2c2c;" +
                 "-fx-padding: 2 6 4 6;" +
@@ -787,13 +790,15 @@ public class MainController {
         fila.setPadding(new Insets(0, 6, 0, 6));
 
         String bordeInferior = ultimaFila ? "0" : "1";
-        fila.setStyle("-fx-border-color: #c0c0c0; -fx-border-width: 1 0 " 
-                + bordeInferior + " 0; -fx-background-color: #f4f4f4;");
+        fila.setStyle(
+                "-fx-border-color: #c0c0c0; " +
+                "-fx-border-width: 1 0 " + bordeInferior + " 0; " +
+                "-fx-background-color: #f4f4f4;"
+        );
 
         Label lblDescripcion = new Label(limpiarDescripcionParaCategoria(existencia, categoria));
         lblDescripcion.setWrapText(false);
         lblDescripcion.setMaxWidth(Double.MAX_VALUE);
-        lblDescripcion.setStyle("-fx-font-size: 15px; -fx-text-fill: #222222; -fx-padding: 2 0 2 0;");
 
         Label lblExistencia = new Label(formatearExistencia(existencia.getExistenciaOrZero()));
         lblExistencia.setAlignment(Pos.CENTER_RIGHT);
@@ -809,9 +814,9 @@ public class MainController {
         fila.add(lblExistencia, 1, 0);
 
         return fila;
-}
-    
-    private void aplicarColorStock(Label lblExistencia, Label lblDescripcion, Existencia existencia, Categoria categoria) {
+    }
+
+    private void aplicarColorStock(Label lblDescripcion, Label lblExistencia, Existencia existencia, Categoria categoria) {
         int existenciaActual = existencia.getExistenciaOrZero() != null
                 ? existencia.getExistenciaOrZero().intValue()
                 : 0;
@@ -819,23 +824,32 @@ public class MainController {
         Integer stockMinimo = categoria.getStockMinimo();
         Integer stockDeseado = categoria.getStockDeseado();
 
-        String estiloBase = "-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #222222; -fx-padding: 2 6 2 6;";
+        String estiloDescripcion = 
+                "-fx-font-size: 23px; " +
+                "-fx-text-fill: #222222; " +
+                "-fx-padding: 2 0 2 0;";
+
+        String estiloExistencia = 
+                "-fx-font-size: 23px; " +
+                "-fx-font-weight: bold; " +
+                "-fx-text-fill: #222222; " +
+                "-fx-padding: 2 6 2 6;";
 
         if (stockMinimo == null || stockDeseado == null) {
-            lblExistencia.setStyle(estiloBase);
-            lblDescripcion.setStyle(estiloBase);
+            lblDescripcion.setStyle(estiloDescripcion);
+            lblExistencia.setStyle(estiloExistencia);
             return;
         }
 
-        if (existenciaActual < stockMinimo) {
-            lblExistencia.setStyle(estiloBase + "-fx-background-color: #ffb3b3;");
-            lblDescripcion.setStyle(estiloBase + "-fx-background-color: #ffb3b3;");
-        } else if (existenciaActual < stockDeseado) {
-            lblExistencia.setStyle(estiloBase + "-fx-background-color: #fff3a3;");
-            lblDescripcion.setStyle(estiloBase + "-fx-background-color: #fff3a3;");
+        if (existenciaActual <= stockMinimo) {
+            lblDescripcion.setStyle(estiloDescripcion + "-fx-background-color: #ffb3b3;");
+            lblExistencia.setStyle(estiloExistencia + "-fx-background-color: #ffb3b3;");
+        } else if (existenciaActual <= stockDeseado) {
+            lblDescripcion.setStyle(estiloDescripcion + "-fx-background-color: #fff3a3;");
+            lblExistencia.setStyle(estiloExistencia + "-fx-background-color: #fff3a3;");
         } else {
-            lblExistencia.setStyle(estiloBase);
-            lblDescripcion.setStyle(estiloBase);
+            lblDescripcion.setStyle(estiloDescripcion);
+            lblExistencia.setStyle(estiloExistencia);
         }
     }
     
@@ -872,8 +886,10 @@ public class MainController {
             VBox columna1 = crearColumnaReporte();
             VBox columna2 = crearColumnaReporte();
             VBox columna3 = crearColumnaReporte();
+            VBox columna4 = crearColumnaReporte();
 
-            List<VBox> columnas = List.of(columna1, columna2, columna3);
+            List<VBox> columnas = List.of(columna1, columna2, columna3, columna4);
+
             int indiceColumna = 0;
 
             for (Categoria categoria : categorias) {
@@ -882,18 +898,24 @@ public class MainController {
                 if (!registrosCategoria.isEmpty()) {
                     VBox bloque = crearBloqueCategoria(categoria, registrosCategoria);
                     columnas.get(indiceColumna).getChildren().add(bloque);
+
                     pendientes.removeAll(registrosCategoria);
                     indiceColumna = (indiceColumna + 1) % columnas.size();
                 }
             }
 
-            layoutColumnas.getChildren().addAll(columna1, columna2, columna3);
+            layoutColumnas.getChildren().addAll(columna1, columna2, columna3, columna4);
 
             HBox.setHgrow(columna1, Priority.ALWAYS);
             HBox.setHgrow(columna2, Priority.ALWAYS);
             HBox.setHgrow(columna3, Priority.ALWAYS);
+            HBox.setHgrow(columna4, Priority.ALWAYS);
 
-            if (columna1.getChildren().isEmpty() && columna2.getChildren().isEmpty() && columna3.getChildren().isEmpty()) {
+            if (columna1.getChildren().isEmpty()
+                    && columna2.getChildren().isEmpty()
+                    && columna3.getChildren().isEmpty()
+                    && columna4.getChildren().isEmpty()) {
+
                 Label lbl = new Label("No hay existencias para mostrar en la sucursal seleccionada.");
                 lbl.setStyle("-fx-font-size: 16px; -fx-text-fill: #30505b;");
                 setContenidoCentral(lbl);
@@ -1084,56 +1106,56 @@ public class MainController {
      * - evita que se acumulen varias alertas,
      * - se cierra sola después de 30 segundos.
      */
-    private void mostrarErroresSincronizacionNoBloqueante(List<String> errores) {
-        String detalle = (errores == null || errores.isEmpty())
-                ? "Se detectaron errores de sincronización."
-                : String.join("\n", errores);
-
-        if (alertErroresSync == null) {
-            alertErroresSync = new Alert(Alert.AlertType.ERROR);
-            alertErroresSync.setTitle("Errores de sincronización");
-            alertErroresSync.setHeaderText("Se encontraron errores al sincronizar sucursales.");
-            alertErroresSync.setContentText("La ventana se cerrará automáticamente en 30 segundos.");
-
-            TextArea textArea = new TextArea();
-            textArea.setEditable(false);
-            textArea.setWrapText(true);
-            textArea.setMaxWidth(Double.MAX_VALUE);
-            textArea.setMaxHeight(Double.MAX_VALUE);
-
-            GridPane.setVgrow(textArea, Priority.ALWAYS);
-            GridPane.setHgrow(textArea, Priority.ALWAYS);
-
-            GridPane content = new GridPane();
-            content.setMaxWidth(Double.MAX_VALUE);
-            content.add(textArea, 0, 0);
-
-            alertErroresSync.getDialogPane().setExpandableContent(content);
-            alertErroresSync.getDialogPane().setExpanded(true);
-        }
-
-        TextArea textArea = (TextArea) ((GridPane) alertErroresSync.getDialogPane().getExpandableContent())
-                .getChildren().get(0);
-
-        textArea.setText(detalle);
-
-        if (autoCloseErroresSync == null) {
-            autoCloseErroresSync = new PauseTransition(Duration.seconds(30));
-            autoCloseErroresSync.setOnFinished(event -> {
-                if (alertErroresSync != null) {
-                    alertErroresSync.hide();
-                }
-            });
-        }
-
-        autoCloseErroresSync.stop();
-
-        if (!alertErroresSync.isShowing()) {
-            alertErroresSync.show();
-        }
-
-        autoCloseErroresSync.playFromStart();
-    }
+//    private void mostrarErroresSincronizacionNoBloqueante(List<String> errores) {
+//        String detalle = (errores == null || errores.isEmpty())
+//                ? "Se detectaron errores de sincronización."
+//                : String.join("\n", errores);
+//
+//        if (alertErroresSync == null) {
+//            alertErroresSync = new Alert(Alert.AlertType.ERROR);
+//            alertErroresSync.setTitle("Errores de sincronización");
+//            alertErroresSync.setHeaderText("Se encontraron errores al sincronizar sucursales.");
+//            alertErroresSync.setContentText("La ventana se cerrará automáticamente en 30 segundos.");
+//
+//            TextArea textArea = new TextArea();
+//            textArea.setEditable(false);
+//            textArea.setWrapText(true);
+//            textArea.setMaxWidth(Double.MAX_VALUE);
+//            textArea.setMaxHeight(Double.MAX_VALUE);
+//
+//            GridPane.setVgrow(textArea, Priority.ALWAYS);
+//            GridPane.setHgrow(textArea, Priority.ALWAYS);
+//
+//            GridPane content = new GridPane();
+//            content.setMaxWidth(Double.MAX_VALUE);
+//            content.add(textArea, 0, 0);
+//
+//            alertErroresSync.getDialogPane().setExpandableContent(content);
+//            alertErroresSync.getDialogPane().setExpanded(true);
+//        }
+//
+//        TextArea textArea = (TextArea) ((GridPane) alertErroresSync.getDialogPane().getExpandableContent())
+//                .getChildren().get(0);
+//
+//        textArea.setText(detalle);
+//
+//        if (autoCloseErroresSync == null) {
+//            autoCloseErroresSync = new PauseTransition(Duration.seconds(30));
+//            autoCloseErroresSync.setOnFinished(event -> {
+//                if (alertErroresSync != null) {
+//                    alertErroresSync.hide();
+//                }
+//            });
+//        }
+//
+//        autoCloseErroresSync.stop();
+//
+//        if (!alertErroresSync.isShowing()) {
+//            alertErroresSync.show();
+//        }
+//
+//        autoCloseErroresSync.playFromStart();
+//    }
 
     /**
      * Muestra una alerta informativa modal.
@@ -1322,17 +1344,36 @@ public class MainController {
     
     private void probarEnvioJsonALaravelLocal() {
         try {
+            String apiUrl = configuracionService.getValorConfiguracion("ApiUrlReporteCategorias");
+            String apiToken = configuracionService.getValorConfiguracion("ApiTokenReporteCategorias");
+
+            if (apiUrl == null || apiUrl.trim().isEmpty()) {
+                mostrarError("Configuración", "No se ha configurado la URL de la API.");
+                return;
+            }
+
+            if (apiToken == null || apiToken.trim().isEmpty()) {
+                mostrarError("Configuración", "No se ha configurado el token de la API.");
+                return;
+            }
+
             ReporteCategoriasApiClient apiClient = new ReporteCategoriasApiClient();
 
             String respuesta = apiClient.enviarJson(
-                    "http://127.0.0.1:8000/api/reporte-categorias",
-                    "token_local_dalmendra_2026",
+                    apiUrl,
+                    apiToken,
                     "reportes/reporte_categorias.json"
             );
 
             System.out.println("Respuesta Laravel: " + respuesta);
         } catch (Exception e) {
             e.printStackTrace();
+            mostrarError("Error API", "No fue posible enviar el JSON: " + e.getMessage());
         }
+    }
+    
+    private void configurarPausaSincronizacionEnVentana(Stage stage) {
+        stage.setOnShown(event -> appState.setBanActualizacion(false));
+        stage.setOnHidden(event -> appState.setBanActualizacion(true));
     }
 }
