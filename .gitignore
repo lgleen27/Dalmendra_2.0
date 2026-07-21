@@ -1,5 +1,7 @@
 #Compliados
 target/
+jpackage-input/
+*.msi
 
 # Compiled class file
 *.class
