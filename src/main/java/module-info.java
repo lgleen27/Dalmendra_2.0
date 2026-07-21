@@ -1,4 +1,4 @@
-module com.frexal.dalmendra.DalmendraApplication {
+module com.frexal.dalmendra.MainLauncher {
     requires javafx.controls;
     requires javafx.fxml;
     requires java.sql;
