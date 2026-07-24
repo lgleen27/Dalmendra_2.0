@@ -55,6 +55,10 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;
@@ -1331,17 +1335,20 @@ public class MainController {
             );
 
             ReporteCategoriasJsonDto reporte = dataService.construirReporteCompleto();
+            Path archivoJson = obtenerRutaJsonReporteCategorias();
 
             ReporteCategoriasJsonService jsonService = new ReporteCategoriasJsonService();
-            jsonService.guardarJsonDto(reporte, "reportes/reporte_categorias.json");
+            jsonService.guardarJsonDto(reporte, archivoJson.toString());
 
-            System.out.println("JSON real generado correctamente.");
+            System.out.println("JSON real generado correctamente en: " + archivoJson.toAbsolutePath());
             probarEnvioJsonALaravelLocal();
+
         } catch (Exception e) {
+            System.out.println("No se genero ni madres");
             e.printStackTrace();
         }
     }
-    
+
     private void probarEnvioJsonALaravelLocal() {
         try {
             String apiUrl = configuracionService.getValorConfiguracion("ApiUrlReporteCategorias");
@@ -1357,12 +1364,14 @@ public class MainController {
                 return;
             }
 
+            Path rutaJson = obtenerRutaJsonReporteCategorias();
+
             ReporteCategoriasApiClient apiClient = new ReporteCategoriasApiClient();
 
             String respuesta = apiClient.enviarJson(
                     apiUrl,
                     apiToken,
-                    "reportes/reporte_categorias.json"
+                    rutaJson.toString()
             );
 
             System.out.println("Respuesta Laravel: " + respuesta);
@@ -1370,6 +1379,20 @@ public class MainController {
             e.printStackTrace();
             mostrarError("Error API", "No fue posible enviar el JSON: " + e.getMessage());
         }
+    }
+
+    private Path obtenerRutaJsonReporteCategorias() throws Exception {
+        String appData = System.getenv("APPDATA");
+        Path carpetaBase;
+
+        if (appData != null && !appData.isBlank()) {
+            carpetaBase = Paths.get(appData, "Dalmendra", "reportes");
+        } else {
+            carpetaBase = Paths.get(System.getProperty("user.home"), "Dalmendra", "reportes");
+        }
+
+        Files.createDirectories(carpetaBase);
+        return carpetaBase.resolve("reporte_categorias.json");
     }
     
     private void configurarPausaSincronizacionEnVentana(Stage stage) {
