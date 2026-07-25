@@ -48,7 +48,7 @@ public class CategoriaRepository {
     }
 
     public Categoria insert(Categoria categoria) throws SQLException {
-        String sql = "INSERT INTO categorias (descripcion, palabra_clave, orden, estado, stock_minimo, stock_deseado) VALUES (?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO categorias (descripcion, palabra_clave, orden, estado) VALUES (?, ?, ?, ?)";
 
         try (Connection cn = MySqlConnectionFactory.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -57,18 +57,6 @@ public class CategoriaRepository {
             ps.setString(2, categoria.getPalabraClave());
             ps.setInt(3, categoria.getOrden() == null ? 0 : categoria.getOrden());
             ps.setBoolean(4, categoria.getEstado() != null && categoria.getEstado());
-
-            if (categoria.getStockMinimo() != null) {
-                ps.setInt(5, categoria.getStockMinimo());
-            } else {
-                ps.setNull(5, Types.INTEGER);
-            }
-
-            if (categoria.getStockDeseado() != null) {
-                ps.setInt(6, categoria.getStockDeseado());
-            } else {
-                ps.setNull(6, Types.INTEGER);
-            }
 
             ps.executeUpdate();
 
@@ -83,7 +71,7 @@ public class CategoriaRepository {
     }
 
     public Categoria update(Categoria categoria) throws SQLException {
-        String sql = "UPDATE categorias SET descripcion = ?, palabra_clave = ?, orden = ?, estado = ?, stock_minimo = ?, stock_deseado = ? WHERE id = ?";
+        String sql = "UPDATE categorias SET descripcion = ?, palabra_clave = ?, orden = ?, estado = ? WHERE id = ?";
 
         try (Connection cn = MySqlConnectionFactory.getConnection();
              PreparedStatement ps = cn.prepareStatement(sql)) {
@@ -92,20 +80,8 @@ public class CategoriaRepository {
             ps.setString(2, categoria.getPalabraClave());
             ps.setInt(3, categoria.getOrden() == null ? 0 : categoria.getOrden());
             ps.setBoolean(4, categoria.getEstado() != null && categoria.getEstado());
+            ps.setLong(5, categoria.getId());
 
-            if (categoria.getStockMinimo() != null) {
-                ps.setInt(5, categoria.getStockMinimo());
-            } else {
-                ps.setNull(5, Types.INTEGER);
-            }
-
-            if (categoria.getStockDeseado() != null) {
-                ps.setInt(6, categoria.getStockDeseado());
-            } else {
-                ps.setNull(6, Types.INTEGER);
-            }
-
-            ps.setLong(7, categoria.getId());
             ps.executeUpdate();
         }
 
@@ -139,8 +115,6 @@ public class CategoriaRepository {
         c.setPalabraClave(rs.getString("palabra_clave"));
         c.setOrden(rs.getInt("orden"));
         c.setEstado(rs.getBoolean("estado"));
-        c.setStockMinimo((Integer) rs.getObject("stock_minimo"));
-        c.setStockDeseado((Integer) rs.getObject("stock_deseado"));
         return c;
     }
 }

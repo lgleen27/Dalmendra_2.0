@@ -32,7 +32,7 @@ public class ExistenciaRepository {
 
         return items;
     }
-    
+
     public List<Existencia> findBySucursalIdAndPalabraClave(Long sucursalId, String palabraClave) throws SQLException {
         String sql =
                 "SELECT * FROM existencias " +
@@ -57,7 +57,7 @@ public class ExistenciaRepository {
 
         return items;
     }
-    
+
     public List<Existencia> findBySucursalIdOrderByOrden(Long sucursalId) throws SQLException {
         String sql =
                 "SELECT * FROM existencias " +
@@ -234,6 +234,9 @@ public class ExistenciaRepository {
         e.setCodigo(rs.getString("codigo"));
         e.setDescripcion(rs.getString("descripcion"));
         e.setExistencia(rs.getBigDecimal("existencia"));
+
+        e.setStockMinimo(null);
+        e.setStockDeseado(null);
 
         int orden = rs.getInt("orden");
         e.setOrden(rs.wasNull() ? null : orden);

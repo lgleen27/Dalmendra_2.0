@@ -12,6 +12,8 @@ public class Existencia {
     private String codigo;
     private String descripcion;
     private BigDecimal existencia;
+    private Integer stockMinimo;
+    private Integer stockDeseado;
     private Integer orden;
     private LocalDateTime fechaActualizacion;
 
@@ -64,6 +66,22 @@ public class Existencia {
 
     public void setExistencia(BigDecimal existencia) {
         this.existencia = existencia;
+    }
+
+    public Integer getStockMinimo() {
+        return stockMinimo;
+    }
+
+    public void setStockMinimo(Integer stockMinimo) {
+        this.stockMinimo = stockMinimo;
+    }
+
+    public Integer getStockDeseado() {
+        return stockDeseado;
+    }
+
+    public void setStockDeseado(Integer stockDeseado) {
+        this.stockDeseado = stockDeseado;
     }
 
     public Integer getOrden() {

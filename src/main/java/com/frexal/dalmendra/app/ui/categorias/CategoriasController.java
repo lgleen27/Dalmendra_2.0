@@ -30,8 +30,6 @@ public class CategoriasController {
     @FXML private TextField txtDescripcion;
     @FXML private TextField txtPalabraClave;
     @FXML private CheckBox ckbEstado;
-    @FXML private Label txtStockDeseado;
-    @FXML private Label txtStockMinimo;
 
     @FXML private TableView<Categoria> tblCategorias;
     @FXML private TableColumn<Categoria, Long> colId;
@@ -49,7 +47,6 @@ public class CategoriasController {
     @FXML private Button btnSubir;
     @FXML private Button btnBajar;
     @FXML private Button btnFinal;
-    @FXML private Button btnStock;
 
     private final CategoriaService categoriaService =
             new CategoriaService(new CategoriaRepository());
@@ -114,9 +111,7 @@ public class CategoriasController {
         txtDescripcion.setText(categoria.getDescripcion() == null ? "" : categoria.getDescripcion());
         txtPalabraClave.setText(categoria.getPalabraClave() == null ? "" : categoria.getPalabraClave());
         ckbEstado.setSelected(Boolean.TRUE.equals(categoria.getEstado()));
-
-        txtStockMinimo.setText(categoria.getStockMinimo() == null ? "" : String.valueOf(categoria.getStockMinimo()));
-        txtStockDeseado.setText(categoria.getStockDeseado() == null ? "" : String.valueOf(categoria.getStockDeseado()));
+        
     }
 
     private void habilitarCampos() {
@@ -154,8 +149,6 @@ public class CategoriasController {
         txtDescripcion.clear();
         txtPalabraClave.clear();
         ckbEstado.setSelected(true);
-        txtStockMinimo.setText("");
-        txtStockDeseado.setText("");
         status = "0";
     }
 
@@ -344,94 +337,6 @@ public class CategoriasController {
         categorias.add(seleccionada);
         persistirOrden();
         tblCategorias.getSelectionModel().selectLast();
-    }
-    
-    @FXML
-    private void onConfigurarStock() {
-        Categoria seleccionada = tblCategorias.getSelectionModel().getSelectedItem();
-
-        if (seleccionada == null) {
-            mostrarInformacion("Categorías", "Debes seleccionar una categoría.");
-            return;
-        }
-
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Configurar stock");
-        dialog.setHeaderText("Categoría: " + seleccionada.getDescripcion());
-
-        ButtonType btnGuardarDialog = new ButtonType("Guardar", ButtonBar.ButtonData.OK_DONE);
-        ButtonType btnCancelarDialog = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
-
-        dialog.getDialogPane().getButtonTypes().addAll(btnGuardarDialog, btnCancelarDialog);
-
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(15));
-
-        Label lblMinimo = new Label("Stock mínimo:");
-        Label lblMaximo = new Label("Stock deseado:");
-        TextField txtMinimo = new TextField();
-        TextField txtMaximo = new TextField();
-
-        txtMinimo.setPrefWidth(120);
-        txtMaximo.setPrefWidth(120);
-
-        if (seleccionada.getStockMinimo() != null) {
-            txtMinimo.setText(String.valueOf(seleccionada.getStockMinimo()));
-        }
-
-        if (seleccionada.getStockDeseado() != null) {
-            txtMaximo.setText(String.valueOf(seleccionada.getStockDeseado()));
-        }
-
-        grid.add(lblMinimo, 0, 0);
-        grid.add(txtMinimo, 1, 0);
-        grid.add(lblMaximo, 0, 1);
-        grid.add(txtMaximo, 1, 1);
-
-        dialog.getDialogPane().setContent(grid);
-
-        Node botonGuardar = dialog.getDialogPane().lookupButton(btnGuardarDialog);
-        botonGuardar.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
-            try {
-                int minimo = Integer.parseInt(txtMinimo.getText().trim());
-                int maximo = Integer.parseInt(txtMaximo.getText().trim());
-
-                if (minimo < 0 || maximo < 0) {
-                    mostrarError("Validación", "Los valores no pueden ser negativos.");
-                    event.consume();
-                    return;
-                }
-
-                if (maximo < minimo) {
-                    mostrarError("Validación", "El stock máximo no puede ser menor al stock mínimo.");
-                    event.consume();
-                }
-            } catch (NumberFormatException ex) {
-                mostrarError("Validación", "Debes escribir números válidos.");
-                event.consume();
-            }
-        });
-
-        Optional<ButtonType> resultado = dialog.showAndWait();
-
-        if (resultado.isPresent() && resultado.get() == btnGuardarDialog) {
-            try {
-                int minimo = Integer.parseInt(txtMinimo.getText().trim());
-                int maximo = Integer.parseInt(txtMaximo.getText().trim());
-
-                seleccionada.setStockMinimo(minimo);
-                seleccionada.setStockDeseado(maximo);
-
-                categoriaService.save(seleccionada);
-                cargarCategorias();
-
-                mostrarInformacion("Categorías", "Stock configurado correctamente.");
-            } catch (Exception ex) {
-                mostrarError("Error", "No se pudo guardar la configuración de stock: " + ex.getMessage());
-            }
-        }
     }
 
     private void persistirOrden() {

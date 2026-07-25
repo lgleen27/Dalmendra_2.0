@@ -8,8 +8,6 @@ public class CategoriaReporteJsonDto {
     private Long categoriaId;
     private String nombre;
     private String palabraClave;
-    private Integer stockMinimo;
-    private Integer stockDeseado;
     private Integer totalProductos;
     private List<ProductoReporteJsonDto> productos = new ArrayList<>();
 
@@ -35,22 +33,6 @@ public class CategoriaReporteJsonDto {
 
     public void setPalabraClave(String palabraClave) {
         this.palabraClave = palabraClave;
-    }
-
-    public Integer getStockMinimo() {
-        return stockMinimo;
-    }
-
-    public void setStockMinimo(Integer stockMinimo) {
-        this.stockMinimo = stockMinimo;
-    }
-
-    public Integer getStockDeseado() {
-        return stockDeseado;
-    }
-
-    public void setStockDeseado(Integer stockDeseado) {
-        this.stockDeseado = stockDeseado;
     }
 
     public Integer getTotalProductos() {

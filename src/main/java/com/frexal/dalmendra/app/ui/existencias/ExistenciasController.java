@@ -2,31 +2,44 @@ package com.frexal.dalmendra.app.ui.existencias;
 
 import com.frexal.dalmendra.app.model.Categoria;
 import com.frexal.dalmendra.app.model.Existencia;
+import com.frexal.dalmendra.app.model.ExistenciaStock;
 import com.frexal.dalmendra.app.model.Sucursal;
 import com.frexal.dalmendra.app.repository.CategoriaRepository;
 import com.frexal.dalmendra.app.repository.ExistenciaRepository;
+import com.frexal.dalmendra.app.repository.ExistenciaStockRepository;
 import com.frexal.dalmendra.app.service.AppState;
 import com.frexal.dalmendra.app.service.OrdenExistenciaService;
 import com.frexal.dalmendra.app.service.SucursalService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class ExistenciasController {
 
@@ -63,6 +76,9 @@ public class ExistenciasController {
     private Button btnGuardar;
 
     @FXML
+    private Button btnStock;
+
+    @FXML
     private Button btnCerrar;
 
     @FXML
@@ -82,6 +98,7 @@ public class ExistenciasController {
 
     private final ExistenciaRepository existenciaRepository = new ExistenciaRepository();
     private final CategoriaRepository categoriaRepository = new CategoriaRepository();
+    private final ExistenciaStockRepository existenciaStockRepository = new ExistenciaStockRepository();
 
     private SucursalService sucursalService;
     private OrdenExistenciaService ordenExistenciaService;
@@ -248,6 +265,7 @@ public class ExistenciasController {
                 );
             }
 
+            aplicarStockLocal(registros);
             existencias.setAll(registros);
 
             if (registros.isEmpty()) {
@@ -338,6 +356,98 @@ public class ExistenciasController {
             lblEstado.setText("Orden guardado correctamente.");
         } catch (Exception ex) {
             mostrarError("Existencias", "No se pudo guardar el orden: " + ex.getMessage());
+        }
+    }
+
+    @FXML
+    private void onConfigurarStock() {
+        Existencia seleccionada = tblExistencias.getSelectionModel().getSelectedItem();
+
+        if (seleccionada == null) {
+            mostrarInformacion("Existencias", "Debes seleccionar un registro.");
+            return;
+        }
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Configurar stock");
+        dialog.setHeaderText("Artículo: " + valor(seleccionada.getDescripcion()));
+
+        ButtonType btnGuardarDialog = new ButtonType("Guardar", ButtonBar.ButtonData.OK_DONE);
+        ButtonType btnCancelarDialog = new ButtonType("Cancelar", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        dialog.getDialogPane().getButtonTypes().addAll(btnGuardarDialog, btnCancelarDialog);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(15));
+
+        Label lblMinimo = new Label("Stock mínimo:");
+        Label lblDeseado = new Label("Stock deseado:");
+        TextField txtMinimo = new TextField();
+        TextField txtDeseado = new TextField();
+
+        if (seleccionada.getStockMinimo() != null) {
+            txtMinimo.setText(String.valueOf(seleccionada.getStockMinimo()));
+        }
+
+        if (seleccionada.getStockDeseado() != null) {
+            txtDeseado.setText(String.valueOf(seleccionada.getStockDeseado()));
+        }
+
+        grid.add(lblMinimo, 0, 0);
+        grid.add(txtMinimo, 1, 0);
+        grid.add(lblDeseado, 0, 1);
+        grid.add(txtDeseado, 1, 1);
+
+        dialog.getDialogPane().setContent(grid);
+
+        Node botonGuardar = dialog.getDialogPane().lookupButton(btnGuardarDialog);
+        botonGuardar.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            try {
+                int minimo = Integer.parseInt(txtMinimo.getText().trim());
+                int deseado = Integer.parseInt(txtDeseado.getText().trim());
+
+                if (minimo < 0 || deseado < 0) {
+                    mostrarError("Validación", "Los valores no pueden ser negativos.");
+                    event.consume();
+                    return;
+                }
+
+                if (deseado < minimo) {
+                    mostrarError("Validación", "El stock deseado no puede ser menor al stock mínimo.");
+                    event.consume();
+                }
+            } catch (NumberFormatException ex) {
+                mostrarError("Validación", "Debes escribir números válidos.");
+                event.consume();
+            }
+        });
+
+        Optional<ButtonType> resultado = dialog.showAndWait();
+
+        if (resultado.isPresent() && resultado.get() == btnGuardarDialog) {
+            try {
+                int minimo = Integer.parseInt(txtMinimo.getText().trim());
+                int deseado = Integer.parseInt(txtDeseado.getText().trim());
+
+                ExistenciaStock stock = new ExistenciaStock();
+                stock.setSucursalId(seleccionada.getSucursalId());
+                stock.setCodigo(seleccionada.getCodigo());
+                stock.setStockMinimo(minimo);
+                stock.setStockDeseado(deseado);
+                stock.setFechaActualizacion(LocalDateTime.now());
+
+                existenciaStockRepository.save(stock);
+
+                seleccionada.setStockMinimo(minimo);
+                seleccionada.setStockDeseado(deseado);
+
+                tblExistencias.refresh();
+                mostrarInformacion("Existencias", "Stock configurado correctamente.");
+            } catch (Exception ex) {
+                mostrarError("Error", "No se pudo guardar la configuración de stock: " + ex.getMessage());
+            }
         }
     }
 
@@ -468,5 +578,47 @@ public class ExistenciasController {
         alert.setHeaderText(null);
         alert.setContentText(mensaje);
         alert.showAndWait();
+    }
+
+    private void aplicarStockLocal(List<Existencia> existencias) {
+        if (existencias == null || existencias.isEmpty()) {
+            return;
+        }
+
+        Long sucursalId = existencias.get(0).getSucursalId();
+        if (sucursalId == null) {
+            return;
+        }
+
+        try {
+            List<ExistenciaStock> stocks = existenciaStockRepository.findBySucursalId(sucursalId);
+            Map<String, ExistenciaStock> stockPorCodigo = new HashMap<>();
+
+            for (ExistenciaStock stock : stocks) {
+                if (stock.getCodigo() != null) {
+                    stockPorCodigo.put(stock.getCodigo().trim(), stock);
+                }
+            }
+
+            for (Existencia existencia : existencias) {
+                if (existencia.getCodigo() == null) {
+                    existencia.setStockMinimo(null);
+                    existencia.setStockDeseado(null);
+                    continue;
+                }
+
+                ExistenciaStock stockLocal = stockPorCodigo.get(existencia.getCodigo().trim());
+
+                if (stockLocal != null) {
+                    existencia.setStockMinimo(stockLocal.getStockMinimo());
+                    existencia.setStockDeseado(stockLocal.getStockDeseado());
+                } else {
+                    existencia.setStockMinimo(null);
+                    existencia.setStockDeseado(null);
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }

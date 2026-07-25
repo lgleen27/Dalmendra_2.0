@@ -6,16 +6,20 @@ import com.frexal.dalmendra.app.dto.reporte.ReporteCategoriasJsonDto;
 import com.frexal.dalmendra.app.dto.reporte.SucursalReporteJsonDto;
 import com.frexal.dalmendra.app.model.Categoria;
 import com.frexal.dalmendra.app.model.Existencia;
+import com.frexal.dalmendra.app.model.ExistenciaStock;
 import com.frexal.dalmendra.app.model.Sucursal;
 import com.frexal.dalmendra.app.repository.CategoriaRepository;
 import com.frexal.dalmendra.app.repository.ExistenciaRepository;
+import com.frexal.dalmendra.app.repository.ExistenciaStockRepository;
 import com.frexal.dalmendra.app.repository.SucursalRepository;
 
 import java.math.BigDecimal;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ReporteCategoriasDataService {
@@ -23,13 +27,16 @@ public class ReporteCategoriasDataService {
     private final SucursalRepository sucursalRepository;
     private final CategoriaRepository categoriaRepository;
     private final ExistenciaRepository existenciaRepository;
+    private final ExistenciaStockRepository existenciaStockRepository;
 
     public ReporteCategoriasDataService(SucursalRepository sucursalRepository,
                                         CategoriaRepository categoriaRepository,
-                                        ExistenciaRepository existenciaRepository) {
+                                        ExistenciaRepository existenciaRepository,
+                                        ExistenciaStockRepository existenciaStockRepository) {
         this.sucursalRepository = sucursalRepository;
         this.categoriaRepository = categoriaRepository;
         this.existenciaRepository = existenciaRepository;
+        this.existenciaStockRepository = existenciaStockRepository;
     }
 
     public ReporteCategoriasJsonDto construirReporteCompleto() throws SQLException {
@@ -60,6 +67,7 @@ public class ReporteCategoriasDataService {
 
         List<Categoria> categoriasActivas = obtenerCategoriasActivas();
         List<Existencia> existenciasSucursal = obtenerExistenciasPorSucursal(sucursal.getId());
+        aplicarStockLocal(existenciasSucursal, sucursal.getId());
 
         List<CategoriaReporteJsonDto> categoriasJson = new ArrayList<>();
         int totalProductos = 0;
@@ -75,8 +83,6 @@ public class ReporteCategoriasDataService {
             categoriaDto.setCategoriaId(categoria.getId());
             categoriaDto.setNombre(categoria.getDescripcion());
             categoriaDto.setPalabraClave(categoria.getPalabraClave());
-            categoriaDto.setStockMinimo(categoria.getStockMinimo());
-            categoriaDto.setStockDeseado(categoria.getStockDeseado());
             categoriaDto.setProductos(productos);
             categoriaDto.setTotalProductos(productos.size());
 
@@ -89,6 +95,37 @@ public class ReporteCategoriasDataService {
         dto.setTotalProductos(totalProductos);
 
         return dto;
+    }
+
+    private void aplicarStockLocal(List<Existencia> existencias, Long sucursalId) throws SQLException {
+        if (existencias == null || existencias.isEmpty() || sucursalId == null) {
+            return;
+        }
+
+        List<ExistenciaStock> stocks = existenciaStockRepository.findBySucursalId(sucursalId);
+        Map<String, ExistenciaStock> stockPorCodigo = new HashMap<>();
+
+        for (ExistenciaStock stock : stocks) {
+            if (stock.getCodigo() != null) {
+                stockPorCodigo.put(stock.getCodigo().trim(), stock);
+            }
+        }
+
+        for (Existencia existencia : existencias) {
+            if (existencia.getCodigo() == null) {
+                continue;
+            }
+
+            ExistenciaStock stockLocal = stockPorCodigo.get(existencia.getCodigo().trim());
+
+            if (stockLocal != null) {
+                existencia.setStockMinimo(stockLocal.getStockMinimo());
+                existencia.setStockDeseado(stockLocal.getStockDeseado());
+            } else {
+                existencia.setStockMinimo(null);
+                existencia.setStockDeseado(null);
+            }
+        }
     }
 
     private List<ProductoReporteJsonDto> filtrarProductosPorCategoria(Categoria categoria,
@@ -105,15 +142,16 @@ public class ReporteCategoriasDataService {
             producto.setCodigo(existencia.getCodigo());
             producto.setDescripcion(existencia.getDescripcion());
             producto.setExistencia(existencia.getExistencia());
+            producto.setStockMinimo(existencia.getStockMinimo());
+            producto.setStockDeseado(existencia.getStockDeseado());
 
             String estadoStock = calcularEstadoStock(
                     existencia.getExistencia(),
-                    categoria.getStockMinimo(),
-                    categoria.getStockDeseado()
+                    existencia.getStockMinimo(),
+                    existencia.getStockDeseado()
             );
 
             producto.setEstadoStock(estadoStock);
-
             productos.add(producto);
         }
 
@@ -146,30 +184,23 @@ public class ReporteCategoriasDataService {
     }
 
     private String calcularEstadoStock(BigDecimal existencia, Integer stockMinimo, Integer stockDeseado) {
+        if (stockMinimo == null || stockDeseado == null) {
+            return "SIN_CONFIGURAR";
+        }
+
         BigDecimal valorExistencia = existencia != null ? existencia : BigDecimal.ZERO;
-        BigDecimal minimo = stockMinimo != null ? BigDecimal.valueOf(stockMinimo) : BigDecimal.ZERO;
-        BigDecimal deseado = stockDeseado != null ? BigDecimal.valueOf(stockDeseado) : BigDecimal.ZERO;
+        BigDecimal minimo = BigDecimal.valueOf(stockMinimo);
+        BigDecimal deseado = BigDecimal.valueOf(stockDeseado);
 
         if (valorExistencia.compareTo(minimo) <= 0) {
             return "MINIMO_CRITICO";
         }
 
-        if (valorExistencia.compareTo(deseado) < 0) {
+        if (valorExistencia.compareTo(deseado) <= 0) {
             return "BAJO_DESEADO";
         }
 
         return "NORMAL";
-    }
-
-    private String obtenerColorHex(String estadoStock) {
-        switch (estadoStock) {
-            case "MINIMO_CRITICO":
-                return "#F4B4B4";
-            case "BAJO_DESEADO":
-                return "#F3E7A1";
-            default:
-                return "#D9D9D9";
-        }
     }
 
     private List<Sucursal> obtenerSucursalesActivas() throws SQLException {
@@ -183,7 +214,10 @@ public class ReporteCategoriasDataService {
         return categoriaRepository.findAll()
                 .stream()
                 .filter(s -> Boolean.TRUE.equals(s.getEstado()))
-                .sorted((a, b) -> Integer.compare(a.getOrden(), b.getOrden()))
+                .sorted((a, b) -> Integer.compare(
+                        a.getOrden() != null ? a.getOrden() : Integer.MAX_VALUE,
+                        b.getOrden() != null ? b.getOrden() : Integer.MAX_VALUE
+                ))
                 .collect(Collectors.toList());
     }
 

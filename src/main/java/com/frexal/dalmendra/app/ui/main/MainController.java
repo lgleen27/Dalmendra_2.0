@@ -3,11 +3,13 @@ package com.frexal.dalmendra.app.ui.main;
 import com.frexal.dalmendra.app.model.Categoria;
 import com.frexal.dalmendra.app.model.Existencia;
 import com.frexal.dalmendra.app.model.Sucursal;
+import com.frexal.dalmendra.app.model.ExistenciaStock;
 import com.frexal.dalmendra.app.repository.CategoriaRepository;
 import com.frexal.dalmendra.app.repository.ConfiguracionRepository;
 import com.frexal.dalmendra.app.repository.ExistenciaRepository;
 import com.frexal.dalmendra.app.repository.OrdenExistenciaRepository;
 import com.frexal.dalmendra.app.repository.SucursalRepository;
+import com.frexal.dalmendra.app.repository.ExistenciaStockRepository;
 import com.frexal.dalmendra.app.service.AppState;
 import com.frexal.dalmendra.app.service.ConfiguracionService;
 import com.frexal.dalmendra.app.service.InventarioSyncService;
@@ -121,6 +123,7 @@ public class MainController {
     private final ExistenciaRepository existenciaRepository = new ExistenciaRepository();
     private final OrdenExistenciaRepository ordenExistenciaRepository = new OrdenExistenciaRepository();
     private final CategoriaRepository categoriaRepository = new CategoriaRepository();
+    private final ExistenciaStockRepository existenciaStockRepository = new ExistenciaStockRepository();
 
     /**
      * Bandera simple para evitar que se dispare más de una sincronización al mismo tiempo.
@@ -164,7 +167,7 @@ public class MainController {
      * Alerta reutilizable para errores de sincronización.
      * Se mantiene una sola instancia para evitar que se acumulen varias ventanas.
      */
-    //private Alert alertErroresSync;
+    private Alert alertErroresSync;
 
     /**
      * Temporizador que cierra automáticamente la alerta de errores de sincronización
@@ -478,7 +481,7 @@ public class MainController {
 
                     if (appState.isHayErrorSincronizacion()) {
                         lblSync.setText("Con errores");
-                        //mostrarErroresSincronizacionNoBloqueante(appState.getErroresSincronizacion());
+                        mostrarErroresSincronizacionNoBloqueante(appState.getErroresSincronizacion());
                     } else {
                         lblSync.setText("Correcta");
                         abrirReporteInicial();
@@ -757,17 +760,15 @@ public class MainController {
         box.setMaxWidth(Double.MAX_VALUE);
         box.setStyle(
                 "-fx-background-color: #f4f4f4;" +
-                "-fx-border-color: #a9a9a9;" +
-                "-fx-border-width: 1;"
+                "-fx-border-color: #a9a9a9;" 
         );
 
         Label titulo = new Label(valor(categoria.getDescripcion()).toUpperCase());
         titulo.setMaxWidth(Double.MAX_VALUE);
         titulo.setStyle(
-                "-fx-font-size: 25px;" +
+                "-fx-font-size: 22px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #2c2c2c;" +
-                "-fx-padding: 2 6 4 6;" +
                 "-fx-background-color: transparent;"
         );
 
@@ -781,158 +782,188 @@ public class MainController {
         box.getChildren().addAll(titulo, filas);
         return box;
     }
-
+    /////////////////////////////////////
     /**
-     * Crea una fila individual dentro del bloque de categoría.
-     * La descripción puede limpiarse quitando la palabra clave de la categoría.
-     */
-    private Node crearFilaCategoria(Existencia existencia, Categoria categoria, boolean ultimaFila) {
-        GridPane fila = new GridPane();
-        fila.setHgap(8);
-        fila.setAlignment(Pos.CENTER_LEFT);
-        fila.setMaxWidth(Double.MAX_VALUE);
-        fila.setPadding(new Insets(0, 6, 0, 6));
+    * Crea una fila individual dentro del bloque de categoría.
+    * La descripción puede limpiarse quitando la palabra clave de la categoría.
+    */
+   private Node crearFilaCategoria(Existencia existencia, Categoria categoria, boolean ultimaFila) {
+       GridPane fila = new GridPane();
+       fila.setHgap(4);
+       fila.setAlignment(Pos.CENTER_LEFT);
+       fila.setMaxWidth(Double.MAX_VALUE);
+       fila.setPadding(new Insets(0, 3, 0, 3));
 
-        String bordeInferior = ultimaFila ? "0" : "1";
-        fila.setStyle(
-                "-fx-border-color: #c0c0c0; " +
-                "-fx-border-width: 1 0 " + bordeInferior + " 0; " +
-                "-fx-background-color: #f4f4f4;"
-        );
+       String bordeInferior = ultimaFila ? "0" : "1";
+       fila.setStyle(
+               "-fx-border-color: #c0c0c0; " +
+               "-fx-background-color: #f4f4f4;"
+       );
 
-        Label lblDescripcion = new Label(limpiarDescripcionParaCategoria(existencia, categoria));
-        lblDescripcion.setWrapText(false);
-        lblDescripcion.setMaxWidth(Double.MAX_VALUE);
+       Label lblDescripcion = new Label(limpiarDescripcionParaCategoria(existencia, categoria));
+       lblDescripcion.setWrapText(false);
+       lblDescripcion.setMaxWidth(Double.MAX_VALUE);
 
-        Label lblExistencia = new Label(formatearExistencia(existencia.getExistenciaOrZero()));
-        lblExistencia.setAlignment(Pos.CENTER_RIGHT);
-        lblExistencia.setMinWidth(46);
-        lblExistencia.setPrefWidth(46);
-        lblExistencia.setMaxWidth(46);
+       Label lblExistencia = new Label(formatearExistencia(existencia.getExistenciaOrZero()));
+       lblExistencia.setAlignment(Pos.CENTER_RIGHT);
+       lblExistencia.setMinWidth(34);
+       lblExistencia.setPrefWidth(34);
+       lblExistencia.setMaxWidth(34);
 
-        aplicarColorStock(lblDescripcion, lblExistencia, existencia, categoria);
+       aplicarColorStock(lblDescripcion, lblExistencia, existencia, categoria);
 
-        GridPane.setHgrow(lblDescripcion, Priority.ALWAYS);
+       GridPane.setHgrow(lblDescripcion, Priority.ALWAYS);
 
-        fila.add(lblDescripcion, 0, 0);
-        fila.add(lblExistencia, 1, 0);
+       fila.add(lblDescripcion, 0, 0);
+       fila.add(lblExistencia, 1, 0);
 
-        return fila;
-    }
+       return fila;
+   }
 
-    private void aplicarColorStock(Label lblDescripcion, Label lblExistencia, Existencia existencia, Categoria categoria) {
-        int existenciaActual = existencia.getExistenciaOrZero() != null
-                ? existencia.getExistenciaOrZero().intValue()
-                : 0;
+   private void aplicarColorStock(Label lblDescripcion, Label lblExistencia, Existencia existencia, Categoria categoria) {
+       int existenciaActual = existencia.getExistenciaOrZero() != null
+               ? existencia.getExistenciaOrZero().intValue()
+               : 0;
 
-        Integer stockMinimo = categoria.getStockMinimo();
-        Integer stockDeseado = categoria.getStockDeseado();
+       Integer stockMinimo = existencia.getStockMinimo();
+       Integer stockDeseado = existencia.getStockDeseado();
 
-        String estiloDescripcion = 
-                "-fx-font-size: 23px; " +
-                "-fx-text-fill: #222222; " +
-                "-fx-padding: 2 0 2 0;";
+       String estiloDescripcion =
+               "-fx-font-size: 21px; " +
+               "-fx-font-weight: 600; " +
+               "-fx-text-fill: #222222; " +
+               "-fx-padding: 0 0 0 0;";
+       
 
-        String estiloExistencia = 
-                "-fx-font-size: 23px; " +
-                "-fx-font-weight: bold; " +
-                "-fx-text-fill: #222222; " +
-                "-fx-padding: 2 6 2 6;";
+       String estiloExistencia =
+               "-fx-font-size: 20px; " +
+               "-fx-font-weight: bold; " +
+               "-fx-text-fill: #222222; " +
+               "-fx-padding: 0 0 0 0;";
 
-        if (stockMinimo == null || stockDeseado == null) {
-            lblDescripcion.setStyle(estiloDescripcion);
-            lblExistencia.setStyle(estiloExistencia);
-            return;
-        }
+       if (stockMinimo == null || stockDeseado == null) {
+           lblDescripcion.setStyle(estiloDescripcion);
+           lblExistencia.setStyle(estiloExistencia);
+           return;
+       }
 
-        if (existenciaActual <= stockMinimo) {
-            lblDescripcion.setStyle(estiloDescripcion + "-fx-background-color: #ffb3b3;");
-            lblExistencia.setStyle(estiloExistencia + "-fx-background-color: #ffb3b3;");
-        } else if (existenciaActual <= stockDeseado) {
-            lblDescripcion.setStyle(estiloDescripcion + "-fx-background-color: #fff3a3;");
-            lblExistencia.setStyle(estiloExistencia + "-fx-background-color: #fff3a3;");
-        } else {
-            lblDescripcion.setStyle(estiloDescripcion);
-            lblExistencia.setStyle(estiloExistencia);
-        }
-    }
-    
-    /**
-     * Formatea la existencia numérica para presentarla en pantalla.
-     */
-    private String formatearExistencia(BigDecimal valor) {
-        DecimalFormat decimalFormat = new DecimalFormat("#,##0.####");
-        return decimalFormat.format(valor != null ? valor : BigDecimal.ZERO);
-    }
+       if (existenciaActual <= stockMinimo) {
+           lblDescripcion.setStyle(estiloDescripcion + "-fx-background-color: #ffb3b3;");
+           lblExistencia.setStyle(estiloExistencia + "-fx-background-color: #ffb3b3;");
+       } else if (existenciaActual <= stockDeseado) {
+           lblDescripcion.setStyle(estiloDescripcion + "-fx-background-color: #fff3a3;");
+           lblExistencia.setStyle(estiloExistencia + "-fx-background-color: #fff3a3;");
+       } else {
+           lblDescripcion.setStyle(estiloDescripcion);
+           lblExistencia.setStyle(estiloExistencia);
+       }
+   }
 
-    /**
-     * Construye y muestra el reporte por categorías en el panel central.
-     * Distribuye las categorías en tres columnas visuales.
-     */
-    private void cargarReportePorCategoriasEnPanel() {
-        try {
-            Sucursal sucursal = appState.getSucursalSeleccionada();
+   /**
+    * Construye y muestra el reporte por categorías en el panel central.
+    *
+    * Estrategia:
+    * - Respeta el orden original de las categorías.
+    * - Distribuye en 4 columnas.
+    * - Usa un máximo de celdas visibles por columna.
+    * - Cuando un bloque ya no cabe, pasa a la siguiente columna.
+    */
+   private void cargarReportePorCategoriasEnPanel() {
+       try {
+           Sucursal sucursal = appState.getSucursalSeleccionada();
 
-            if (sucursal == null || sucursal.getId() == null) {
-                setContenidoCentral(new Label("No hay sucursal seleccionada."));
-                return;
-            }
+           if (sucursal == null || sucursal.getId() == null) {
+               setContenidoCentral(new Label("No hay sucursal seleccionada."));
+               return;
+           }
 
-            List<Categoria> categorias = categoriaRepository.findActivas();
-            List<Existencia> existencias = existenciaRepository.findBySucursalId(sucursal.getId());
-            List<Existencia> pendientes = new ArrayList<>(existencias);
+           List<Categoria> categorias = categoriaRepository.findActivas();
+           List<Existencia> existencias = existenciaRepository.findBySucursalId(sucursal.getId());
+           aplicarStockLocal(existencias);
+           List<Existencia> pendientes = new ArrayList<>(existencias);
 
-            HBox layoutColumnas = new HBox(12);
-            layoutColumnas.setPadding(new Insets(8, 10, 8, 10));
-            layoutColumnas.setAlignment(Pos.TOP_LEFT);
-            layoutColumnas.setStyle("-fx-background-color: transparent;");
+           HBox layoutColumnas = new HBox(12);
+           layoutColumnas.setPadding(new Insets(8, 10, 8, 10));
+           layoutColumnas.setAlignment(Pos.TOP_LEFT);
+           layoutColumnas.setStyle("-fx-background-color: transparent;");
 
-            VBox columna1 = crearColumnaReporte();
-            VBox columna2 = crearColumnaReporte();
-            VBox columna3 = crearColumnaReporte();
-            VBox columna4 = crearColumnaReporte();
+           VBox columna1 = crearColumnaReporte();
+           VBox columna2 = crearColumnaReporte();
+           VBox columna3 = crearColumnaReporte();
+           VBox columna4 = crearColumnaReporte();
 
-            List<VBox> columnas = List.of(columna1, columna2, columna3, columna4);
+           List<VBox> columnas = List.of(columna1, columna2, columna3, columna4);
 
-            int indiceColumna = 0;
+           int[] cargas = new int[]{0, 0, 0, 0};
+           int maxCeldasPorColumna = 23;
+           int indiceColumnaActual = 0;
 
-            for (Categoria categoria : categorias) {
-                List<Existencia> registrosCategoria = filtrarExistenciasPorCategoria(pendientes, categoria);
+           for (Categoria categoria : categorias) {
+               List<Existencia> registrosCategoria = filtrarExistenciasPorCategoria(pendientes, categoria);
 
-                if (!registrosCategoria.isEmpty()) {
-                    VBox bloque = crearBloqueCategoria(categoria, registrosCategoria);
-                    columnas.get(indiceColumna).getChildren().add(bloque);
+               if (registrosCategoria.isEmpty()) {
+                   continue;
+               }
 
-                    pendientes.removeAll(registrosCategoria);
-                    indiceColumna = (indiceColumna + 1) % columnas.size();
-                }
-            }
+               VBox bloque = crearBloqueCategoria(categoria, registrosCategoria);
+               int celdasBloque = calcularCeldasBloque(registrosCategoria.size());
 
-            layoutColumnas.getChildren().addAll(columna1, columna2, columna3, columna4);
+               if (indiceColumnaActual < columnas.size() - 1
+                       && cargas[indiceColumnaActual] > 0
+                       && (cargas[indiceColumnaActual] + celdasBloque) > maxCeldasPorColumna) {
+                   indiceColumnaActual++;
+               }
 
-            HBox.setHgrow(columna1, Priority.ALWAYS);
-            HBox.setHgrow(columna2, Priority.ALWAYS);
-            HBox.setHgrow(columna3, Priority.ALWAYS);
-            HBox.setHgrow(columna4, Priority.ALWAYS);
+               columnas.get(indiceColumnaActual).getChildren().add(bloque);
+               cargas[indiceColumnaActual] += celdasBloque;
 
-            if (columna1.getChildren().isEmpty()
-                    && columna2.getChildren().isEmpty()
-                    && columna3.getChildren().isEmpty()
-                    && columna4.getChildren().isEmpty()) {
+               pendientes.removeAll(registrosCategoria);
+           }
 
-                Label lbl = new Label("No hay existencias para mostrar en la sucursal seleccionada.");
-                lbl.setStyle("-fx-font-size: 16px; -fx-text-fill: #30505b;");
-                setContenidoCentral(lbl);
-                return;
-            }
+           if (columna1.getChildren().isEmpty()
+                   && columna2.getChildren().isEmpty()
+                   && columna3.getChildren().isEmpty()
+                   && columna4.getChildren().isEmpty()) {
 
-            ScrollPane scrollPane = crearContenedorScrollable(layoutColumnas);
-            setContenidoCentral(scrollPane);
+               Label lbl = new Label("No hay existencias para mostrar en la sucursal seleccionada.");
+               lbl.setStyle("-fx-font-size: 16px; -fx-text-fill: #30505b;");
+               setContenidoCentral(lbl);
+               return;
+           }
 
-        } catch (Exception ex) {
-            mostrarError("Reporte por categorías", "No se pudo cargar el reporte: " + ex.getMessage());
-        }
-    }
+           layoutColumnas.getChildren().addAll(columna1, columna2, columna3, columna4);
+
+           HBox.setHgrow(columna1, Priority.ALWAYS);
+           HBox.setHgrow(columna2, Priority.ALWAYS);
+           HBox.setHgrow(columna3, Priority.ALWAYS);
+           HBox.setHgrow(columna4, Priority.ALWAYS);
+
+           ScrollPane scrollPane = crearContenedorScrollable(layoutColumnas);
+           setContenidoCentral(scrollPane);
+
+       } catch (Exception ex) {
+           mostrarError("Reporte por categorías", "No se pudo cargar el reporte: " + ex.getMessage());
+       }
+   }
+   
+   /**
+    * Calcula cuántas celdas visuales ocupa un bloque.
+    *
+    * Regla:
+    * - 1 celda para el título.
+    * - 1 celda por cada fila de existencia.
+    */
+   private int calcularCeldasBloque(int cantidadFilas) {
+       return 1 + cantidadFilas;
+   }
+   
+   /**
+    * Formatea la existencia numérica para presentarla en pantalla.
+    */
+   private String formatearExistencia(BigDecimal valor) {
+       DecimalFormat decimalFormat = new DecimalFormat("#,##0.####");
+       return decimalFormat.format(valor != null ? valor : BigDecimal.ZERO);
+   }
 
     /**
      * Valida si una existencia pertenece a una categoría con base
@@ -1023,6 +1054,7 @@ public class MainController {
             }
 
             List<Existencia> registros = existenciaRepository.findBySucursalId(sucursal.getId());
+            aplicarStockLocal(registros);
             List<FilaListadoTriple> filas = construirFilasTriples(registros);
 
             TableView<FilaListadoTriple> table = crearTablaListadoTriple(mostrarCodigo);
@@ -1110,56 +1142,56 @@ public class MainController {
      * - evita que se acumulen varias alertas,
      * - se cierra sola después de 30 segundos.
      */
-//    private void mostrarErroresSincronizacionNoBloqueante(List<String> errores) {
-//        String detalle = (errores == null || errores.isEmpty())
-//                ? "Se detectaron errores de sincronización."
-//                : String.join("\n", errores);
-//
-//        if (alertErroresSync == null) {
-//            alertErroresSync = new Alert(Alert.AlertType.ERROR);
-//            alertErroresSync.setTitle("Errores de sincronización");
-//            alertErroresSync.setHeaderText("Se encontraron errores al sincronizar sucursales.");
-//            alertErroresSync.setContentText("La ventana se cerrará automáticamente en 30 segundos.");
-//
-//            TextArea textArea = new TextArea();
-//            textArea.setEditable(false);
-//            textArea.setWrapText(true);
-//            textArea.setMaxWidth(Double.MAX_VALUE);
-//            textArea.setMaxHeight(Double.MAX_VALUE);
-//
-//            GridPane.setVgrow(textArea, Priority.ALWAYS);
-//            GridPane.setHgrow(textArea, Priority.ALWAYS);
-//
-//            GridPane content = new GridPane();
-//            content.setMaxWidth(Double.MAX_VALUE);
-//            content.add(textArea, 0, 0);
-//
-//            alertErroresSync.getDialogPane().setExpandableContent(content);
-//            alertErroresSync.getDialogPane().setExpanded(true);
-//        }
-//
-//        TextArea textArea = (TextArea) ((GridPane) alertErroresSync.getDialogPane().getExpandableContent())
-//                .getChildren().get(0);
-//
-//        textArea.setText(detalle);
-//
-//        if (autoCloseErroresSync == null) {
-//            autoCloseErroresSync = new PauseTransition(Duration.seconds(30));
-//            autoCloseErroresSync.setOnFinished(event -> {
-//                if (alertErroresSync != null) {
-//                    alertErroresSync.hide();
-//                }
-//            });
-//        }
-//
-//        autoCloseErroresSync.stop();
-//
-//        if (!alertErroresSync.isShowing()) {
-//            alertErroresSync.show();
-//        }
-//
-//        autoCloseErroresSync.playFromStart();
-//    }
+    private void mostrarErroresSincronizacionNoBloqueante(List<String> errores) {
+        String detalle = (errores == null || errores.isEmpty())
+                ? "Se detectaron errores de sincronización."
+                : String.join("\n", errores);
+
+        if (alertErroresSync == null) {
+            alertErroresSync = new Alert(Alert.AlertType.ERROR);
+            alertErroresSync.setTitle("Errores de sincronización");
+            alertErroresSync.setHeaderText("Se encontraron errores al sincronizar sucursales.");
+            alertErroresSync.setContentText("La ventana se cerrará automáticamente en 30 segundos.");
+
+            TextArea textArea = new TextArea();
+            textArea.setEditable(false);
+            textArea.setWrapText(true);
+            textArea.setMaxWidth(Double.MAX_VALUE);
+            textArea.setMaxHeight(Double.MAX_VALUE);
+
+            GridPane.setVgrow(textArea, Priority.ALWAYS);
+            GridPane.setHgrow(textArea, Priority.ALWAYS);
+
+            GridPane content = new GridPane();
+            content.setMaxWidth(Double.MAX_VALUE);
+            content.add(textArea, 0, 0);
+
+            alertErroresSync.getDialogPane().setExpandableContent(content);
+            alertErroresSync.getDialogPane().setExpanded(true);
+        }
+
+        TextArea textArea = (TextArea) ((GridPane) alertErroresSync.getDialogPane().getExpandableContent())
+                .getChildren().get(0);
+
+        textArea.setText(detalle);
+
+        if (autoCloseErroresSync == null) {
+            autoCloseErroresSync = new PauseTransition(Duration.seconds(30));
+            autoCloseErroresSync.setOnFinished(event -> {
+                if (alertErroresSync != null) {
+                    alertErroresSync.hide();
+                }
+            });
+        }
+
+        autoCloseErroresSync.stop();
+
+        if (!alertErroresSync.isShowing()) {
+            alertErroresSync.show();
+        }
+
+        autoCloseErroresSync.playFromStart();
+    }
 
     /**
      * Muestra una alerta informativa modal.
@@ -1331,7 +1363,8 @@ public class MainController {
             ReporteCategoriasDataService dataService = new ReporteCategoriasDataService(
                     sucursalRepository,
                     categoriaRepository,
-                    existenciaRepository
+                    existenciaRepository,
+                    existenciaStockRepository
             );
 
             ReporteCategoriasJsonDto reporte = dataService.construirReporteCompleto();
@@ -1344,7 +1377,7 @@ public class MainController {
             probarEnvioJsonALaravelLocal();
 
         } catch (Exception e) {
-            System.out.println("No se genero ni madres");
+            System.out.println("No se genero el JSON");
             e.printStackTrace();
         }
     }
@@ -1355,12 +1388,12 @@ public class MainController {
             String apiToken = configuracionService.getValorConfiguracion("ApiTokenReporteCategorias");
 
             if (apiUrl == null || apiUrl.trim().isEmpty()) {
-                mostrarError("Configuración", "No se ha configurado la URL de la API.");
+                //mostrarError("Configuración", "No se ha configurado la URL de la API.");
                 return;
             }
 
             if (apiToken == null || apiToken.trim().isEmpty()) {
-                mostrarError("Configuración", "No se ha configurado el token de la API.");
+                //mostrarError("Configuración", "No se ha configurado el token de la API.");
                 return;
             }
 
@@ -1377,7 +1410,7 @@ public class MainController {
             System.out.println("Respuesta Laravel: " + respuesta);
         } catch (Exception e) {
             e.printStackTrace();
-            mostrarError("Error API", "No fue posible enviar el JSON: " + e.getMessage());
+            //mostrarError("Error API", "No fue posible enviar el JSON: " + e.getMessage());
         }
     }
 
@@ -1398,5 +1431,47 @@ public class MainController {
     private void configurarPausaSincronizacionEnVentana(Stage stage) {
         stage.setOnShown(event -> appState.setBanActualizacion(false));
         stage.setOnHidden(event -> appState.setBanActualizacion(true));
+    }
+    
+    private void aplicarStockLocal(List<Existencia> existencias) {
+        if (existencias == null || existencias.isEmpty()) {
+            return;
+        }
+
+        Long sucursalId = existencias.get(0).getSucursalId();
+        if (sucursalId == null) {
+            return;
+        }
+
+        try {
+            List<ExistenciaStock> stocks = existenciaStockRepository.findBySucursalId(sucursalId);
+            java.util.Map<String, ExistenciaStock> stockPorCodigo = new java.util.HashMap<>();
+
+            for (ExistenciaStock stock : stocks) {
+                if (stock.getCodigo() != null) {
+                    stockPorCodigo.put(stock.getCodigo().trim(), stock);
+                }
+            }
+
+            for (Existencia existencia : existencias) {
+                if (existencia.getCodigo() == null) {
+                    existencia.setStockMinimo(null);
+                    existencia.setStockDeseado(null);
+                    continue;
+                }
+
+                ExistenciaStock stockLocal = stockPorCodigo.get(existencia.getCodigo().trim());
+
+                if (stockLocal != null) {
+                    existencia.setStockMinimo(stockLocal.getStockMinimo());
+                    existencia.setStockDeseado(stockLocal.getStockDeseado());
+                } else {
+                    existencia.setStockMinimo(null);
+                    existencia.setStockDeseado(null);
+                }
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 }

@@ -15,7 +15,7 @@ public class MySqlSchemaInitializer {
 
             createTables(statement);
             updateSchemaIfNeeded(connection, statement);
-            seedConfiguracion(statement);
+            //seedConfiguracion(statement);
         }
     }
 
@@ -41,9 +41,7 @@ public class MySqlSchemaInitializer {
             + "descripcion VARCHAR(50), "
             + "palabra_clave VARCHAR(20), "
             + "orden INT NOT NULL DEFAULT 0, "
-            + "estado TINYINT NOT NULL DEFAULT 1, "
-            + "stock_minimo INT NULL, "
-            + "stock_deseado INT NULL"
+            + "estado TINYINT NOT NULL DEFAULT 1"
             + ")"
         );
 
@@ -62,6 +60,21 @@ public class MySqlSchemaInitializer {
             + "ON DELETE CASCADE, "
             + "CONSTRAINT fk_existencias_categoria "
             + "FOREIGN KEY (categoria_id) REFERENCES categorias(id)"
+            + ")"
+        );
+
+        statement.executeUpdate(
+            "CREATE TABLE IF NOT EXISTS existencias_stock ("
+            + "id BIGINT AUTO_INCREMENT PRIMARY KEY, "
+            + "sucursal_id BIGINT NOT NULL, "
+            + "codigo VARCHAR(20) NOT NULL, "
+            + "stock_minimo INT NULL, "
+            + "stock_deseado INT NULL, "
+            + "fecha_actualizacion DATETIME NULL, "
+            + "CONSTRAINT fk_existencias_stock_sucursal "
+            + "FOREIGN KEY (sucursal_id) REFERENCES sucursales(id) "
+            + "ON DELETE CASCADE, "
+            + "CONSTRAINT uk_existencias_stock_sucursal_codigo UNIQUE (sucursal_id, codigo)"
             + ")"
         );
 
@@ -118,6 +131,38 @@ public class MySqlSchemaInitializer {
                 + "FOREIGN KEY (categoria_id) REFERENCES categorias(id)"
             );
         }
+
+        //asegurarTablaExistenciasStock(connection, statement);
+    }
+
+    private void asegurarTablaExistenciasStock(Connection connection, Statement statement) throws SQLException {
+        if (!tableExists(connection, "existencias_stock")) {
+            statement.executeUpdate(
+                "CREATE TABLE existencias_stock ("
+                + "id BIGINT AUTO_INCREMENT PRIMARY KEY, "
+                + "sucursal_id BIGINT NOT NULL, "
+                + "codigo VARCHAR(20) NOT NULL, "
+                + "stock_minimo INT NULL, "
+                + "stock_deseado INT NULL, "
+                + "fecha_actualizacion DATETIME NULL, "
+                + "CONSTRAINT fk_existencias_stock_sucursal "
+                + "FOREIGN KEY (sucursal_id) REFERENCES sucursales(id) "
+                + "ON DELETE CASCADE, "
+                + "CONSTRAINT uk_existencias_stock_sucursal_codigo UNIQUE (sucursal_id, codigo)"
+                + ")"
+            );
+        }
+    }
+
+    private boolean tableExists(Connection connection, String tableName) throws SQLException {
+        String sql = "SELECT 1 FROM information_schema.TABLES "
+                   + "WHERE TABLE_SCHEMA = DATABASE() "
+                   + "AND TABLE_NAME = '" + tableName + "'";
+
+        try (Statement statement = connection.createStatement();
+             ResultSet rs = statement.executeQuery(sql)) {
+            return rs.next();
+        }
     }
 
     private boolean columnExists(Connection connection, String tableName, String columnName) throws SQLException {
@@ -156,41 +201,29 @@ public class MySqlSchemaInitializer {
         }
     }
 
-    private void seedConfiguracion(Statement statement) throws SQLException {
-        statement.executeUpdate(
-            "INSERT INTO configuracion (descripcion, valor) "
-            + "VALUES ('IdDbSelect', '1') "
-            + "ON DUPLICATE KEY UPDATE valor = valor"
-        );
-
-        statement.executeUpdate(
-            "INSERT INTO configuracion (descripcion, valor) "
-            + "VALUES ('TimeSyncSucursal', '1') "
-            + "ON DUPLICATE KEY UPDATE valor = valor"
-        );
-
-        statement.executeUpdate(
-            "INSERT INTO configuracion (descripcion, valor) "
-            + "VALUES ('TimeChangeSucursal', '15') "
-            + "ON DUPLICATE KEY UPDATE valor = valor"
-        );
-
-        statement.executeUpdate(
-            "INSERT INTO configuracion (descripcion, valor) "
-            + "VALUES ('FirstReport', 'PorCategorias') "
-            + "ON DUPLICATE KEY UPDATE valor = valor"
-        );
-        
+//    private void seedConfiguracion(Statement statement) throws SQLException {
 //        statement.executeUpdate(
 //            "INSERT INTO configuracion (descripcion, valor) "
-//            + "VALUES ('ApiUrlReporteCategorias', 'http://127.0.0.1:8000/api/reporte-categorias') "
+//            + "VALUES ('IdDbSelect', '1') "
 //            + "ON DUPLICATE KEY UPDATE valor = valor"
 //        );
 //
 //        statement.executeUpdate(
 //            "INSERT INTO configuracion (descripcion, valor) "
-//            + "VALUES ('ApiTokenReporteCategorias', 'token_local_dalmendra_2026') "
+//            + "VALUES ('TimeSyncSucursal', '1') "
 //            + "ON DUPLICATE KEY UPDATE valor = valor"
 //        );
-    }
+//
+//        statement.executeUpdate(
+//            "INSERT INTO configuracion (descripcion, valor) "
+//            + "VALUES ('TimeChangeSucursal', '15') "
+//            + "ON DUPLICATE KEY UPDATE valor = valor"
+//        );
+//
+//        statement.executeUpdate(
+//            "INSERT INTO configuracion (descripcion, valor) "
+//            + "VALUES ('FirstReport', 'PorCategorias') "
+//            + "ON DUPLICATE KEY UPDATE valor = valor"
+//        );
+//    }
 }
