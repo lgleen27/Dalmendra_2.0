@@ -95,6 +95,12 @@ public class ExistenciasController {
 
     @FXML
     private TableColumn<Existencia, BigDecimal> colExistencia;
+    
+    @FXML
+    private TableColumn<Existencia, Integer> colStockMinimo;
+
+    @FXML
+    private TableColumn<Existencia, Integer> colStockMaximo;
 
     private final ExistenciaRepository existenciaRepository = new ExistenciaRepository();
     private final CategoriaRepository categoriaRepository = new CategoriaRepository();
@@ -124,8 +130,11 @@ public class ExistenciasController {
         colCodigo.setCellValueFactory(new PropertyValueFactory<>("codigo"));
         colDescripcion.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         colExistencia.setCellValueFactory(new PropertyValueFactory<>("existencia"));
+        colStockMinimo.setCellValueFactory(new PropertyValueFactory<>("stockMinimo"));
+        colStockMaximo.setCellValueFactory(new PropertyValueFactory<>("stockDeseado"));
 
         configurarFormatoExistencia();
+        configurarFormatoStock();
         tblExistencias.setItems(existencias);
 
         cmbSucursales.setConverter(new StringConverter<Sucursal>() {
@@ -267,6 +276,7 @@ public class ExistenciasController {
 
             aplicarStockLocal(registros);
             existencias.setAll(registros);
+            btnCancelar.setDisable(false);
 
             if (registros.isEmpty()) {
                 inhabilitarModoOrden();
@@ -554,6 +564,7 @@ public class ExistenciasController {
         btnConsultar.setDisable(false);
         inhabilitarModoOrden();
         lblEstado.setText("Seleccione una sucursal y una categoría.");
+        btnCancelar.setDisable(false);
     }
 
     private boolean esCategoriaTodas(Categoria categoria) {
@@ -620,5 +631,33 @@ public class ExistenciasController {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+    
+    private void configurarFormatoStock() {
+        colStockMinimo.setCellFactory(col -> new TableCell<Existencia, Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                    return;
+                }
+                setText(item != null ? String.valueOf(item) : "-");
+                setStyle("-fx-alignment: CENTER;");
+            }
+        });
+
+        colStockMaximo.setCellFactory(col -> new TableCell<Existencia, Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setText(null);
+                    return;
+                }
+                setText(item != null ? String.valueOf(item) : "-");
+                setStyle("-fx-alignment: CENTER;");
+            }
+        });
     }
 }

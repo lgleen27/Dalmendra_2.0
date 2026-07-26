@@ -167,7 +167,7 @@ public class MainController {
      * Alerta reutilizable para errores de sincronización.
      * Se mantiene una sola instancia para evitar que se acumulen varias ventanas.
      */
-    private Alert alertErroresSync;
+    //private Alert alertErroresSync;
 
     /**
      * Temporizador que cierra automáticamente la alerta de errores de sincronización
@@ -481,7 +481,7 @@ public class MainController {
 
                     if (appState.isHayErrorSincronizacion()) {
                         lblSync.setText("Con errores");
-                        mostrarErroresSincronizacionNoBloqueante(appState.getErroresSincronizacion());
+                        //mostrarErroresSincronizacionNoBloqueante(appState.getErroresSincronizacion());
                     } else {
                         lblSync.setText("Correcta");
                         abrirReporteInicial();
@@ -1142,56 +1142,56 @@ public class MainController {
      * - evita que se acumulen varias alertas,
      * - se cierra sola después de 30 segundos.
      */
-    private void mostrarErroresSincronizacionNoBloqueante(List<String> errores) {
-        String detalle = (errores == null || errores.isEmpty())
-                ? "Se detectaron errores de sincronización."
-                : String.join("\n", errores);
-
-        if (alertErroresSync == null) {
-            alertErroresSync = new Alert(Alert.AlertType.ERROR);
-            alertErroresSync.setTitle("Errores de sincronización");
-            alertErroresSync.setHeaderText("Se encontraron errores al sincronizar sucursales.");
-            alertErroresSync.setContentText("La ventana se cerrará automáticamente en 30 segundos.");
-
-            TextArea textArea = new TextArea();
-            textArea.setEditable(false);
-            textArea.setWrapText(true);
-            textArea.setMaxWidth(Double.MAX_VALUE);
-            textArea.setMaxHeight(Double.MAX_VALUE);
-
-            GridPane.setVgrow(textArea, Priority.ALWAYS);
-            GridPane.setHgrow(textArea, Priority.ALWAYS);
-
-            GridPane content = new GridPane();
-            content.setMaxWidth(Double.MAX_VALUE);
-            content.add(textArea, 0, 0);
-
-            alertErroresSync.getDialogPane().setExpandableContent(content);
-            alertErroresSync.getDialogPane().setExpanded(true);
-        }
-
-        TextArea textArea = (TextArea) ((GridPane) alertErroresSync.getDialogPane().getExpandableContent())
-                .getChildren().get(0);
-
-        textArea.setText(detalle);
-
-        if (autoCloseErroresSync == null) {
-            autoCloseErroresSync = new PauseTransition(Duration.seconds(30));
-            autoCloseErroresSync.setOnFinished(event -> {
-                if (alertErroresSync != null) {
-                    alertErroresSync.hide();
-                }
-            });
-        }
-
-        autoCloseErroresSync.stop();
-
-        if (!alertErroresSync.isShowing()) {
-            alertErroresSync.show();
-        }
-
-        autoCloseErroresSync.playFromStart();
-    }
+//    private void mostrarErroresSincronizacionNoBloqueante(List<String> errores) {
+//        String detalle = (errores == null || errores.isEmpty())
+//                ? "Se detectaron errores de sincronización."
+//                : String.join("\n", errores);
+//
+//        if (alertErroresSync == null) {
+//            alertErroresSync = new Alert(Alert.AlertType.ERROR);
+//            alertErroresSync.setTitle("Errores de sincronización");
+//            alertErroresSync.setHeaderText("Se encontraron errores al sincronizar sucursales.");
+//            alertErroresSync.setContentText("La ventana se cerrará automáticamente en 30 segundos.");
+//
+//            TextArea textArea = new TextArea();
+//            textArea.setEditable(false);
+//            textArea.setWrapText(true);
+//            textArea.setMaxWidth(Double.MAX_VALUE);
+//            textArea.setMaxHeight(Double.MAX_VALUE);
+//
+//            GridPane.setVgrow(textArea, Priority.ALWAYS);
+//            GridPane.setHgrow(textArea, Priority.ALWAYS);
+//
+//            GridPane content = new GridPane();
+//            content.setMaxWidth(Double.MAX_VALUE);
+//            content.add(textArea, 0, 0);
+//
+//            alertErroresSync.getDialogPane().setExpandableContent(content);
+//            alertErroresSync.getDialogPane().setExpanded(true);
+//        }
+//
+//        TextArea textArea = (TextArea) ((GridPane) alertErroresSync.getDialogPane().getExpandableContent())
+//                .getChildren().get(0);
+//
+//        textArea.setText(detalle);
+//
+//        if (autoCloseErroresSync == null) {
+//            autoCloseErroresSync = new PauseTransition(Duration.seconds(30));
+//            autoCloseErroresSync.setOnFinished(event -> {
+//                if (alertErroresSync != null) {
+//                    alertErroresSync.hide();
+//                }
+//            });
+//        }
+//
+//        autoCloseErroresSync.stop();
+//
+//        if (!alertErroresSync.isShowing()) {
+//            alertErroresSync.show();
+//        }
+//
+//        autoCloseErroresSync.playFromStart();
+//    }
 
     /**
      * Muestra una alerta informativa modal.

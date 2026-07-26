@@ -118,9 +118,11 @@
                     <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
                 </columnResizePolicy>
                 <columns>
-                    <TableColumn fx:id="colCodigo" text="Código" prefWidth="120.0" minWidth="100.0"/>
-                    <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="470.0" minWidth="300.0"/>
-                    <TableColumn fx:id="colExistencia" text="Existencia" prefWidth="150.0" minWidth="120.0"/>
+                    <TableColumn fx:id="colCodigo" text="Código" prefWidth="100.0" />
+                    <TableColumn fx:id="colDescripcion" text="Descripción" prefWidth="280.0" />
+                    <TableColumn fx:id="colExistencia" text="Existencia" prefWidth="100.0" />
+                    <TableColumn fx:id="colStockMinimo" text="Stock mínimo" prefWidth="100.0" />
+                    <TableColumn fx:id="colStockMaximo" text="Stock máximo" prefWidth="100.0" />                    
                 </columns>
             </TableView>
         </VBox>
