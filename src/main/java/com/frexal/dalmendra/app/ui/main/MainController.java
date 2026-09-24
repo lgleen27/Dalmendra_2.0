@@ -736,11 +736,15 @@ public class MainController {
      * Crea una columna visual usada en el reporte por categorías.
      */
     private VBox crearColumnaReporte() {
-        VBox columna = new VBox(10);
+        VBox columna = new VBox(6);
         columna.setAlignment(Pos.TOP_LEFT);
         columna.setFillWidth(true);
         columna.setMaxWidth(Double.MAX_VALUE);
-        columna.setPrefWidth(300);
+        columna.setMinWidth(0);
+        columna.setPrefWidth(0);
+
+        HBox.setHgrow(columna, Priority.ALWAYS);
+
         return columna;
     }
 
@@ -753,72 +757,110 @@ public class MainController {
      * y la lista de existencias pertenecientes a esa categoría.
      */
     private VBox crearBloqueCategoria(Categoria categoria, List<Existencia> existencias) {
-        VBox box = new VBox();
-        box.setSpacing(0);
-        box.setAlignment(Pos.TOP_LEFT);
-        box.setFillWidth(true);
-        box.setMaxWidth(Double.MAX_VALUE);
-        box.setStyle(
-                "-fx-background-color: #f4f4f4;" +
-                "-fx-border-color: #a9a9a9;" 
-        );
+        VBox contenedor = new VBox();
+        contenedor.setSpacing(0);
+        contenedor.setAlignment(Pos.TOP_LEFT);
+        contenedor.setFillWidth(true);
+        contenedor.setMaxWidth(Double.MAX_VALUE);
 
         Label titulo = new Label(valor(categoria.getDescripcion()).toUpperCase());
         titulo.setMaxWidth(Double.MAX_VALUE);
+        titulo.setMinHeight(35);
+        titulo.setPrefHeight(35);
+
         titulo.setStyle(
-                "-fx-font-size: 22px;" +
+                "-fx-font-size: 25px;" +
                 "-fx-font-weight: bold;" +
                 "-fx-text-fill: #2c2c2c;" +
-                "-fx-background-color: transparent;"
+                "-fx-background-color: transparent;" +
+                "-fx-padding: 0 0 1 0;"
         );
 
-        VBox filas = new VBox();
-        filas.setFillWidth(true);
+        VBox tabla = new VBox();
+        tabla.setSpacing(0);
+        tabla.setFillWidth(true);
+        tabla.setMaxWidth(Double.MAX_VALUE);
 
         for (int i = 0; i < existencias.size(); i++) {
-            filas.getChildren().add(crearFilaCategoria(existencias.get(i), categoria, i == existencias.size() - 1));
+            tabla.getChildren().add(
+                    crearFilaCategoria(
+                            existencias.get(i),
+                            categoria,
+                            i == existencias.size() - 1
+                    )
+            );
         }
 
-        box.getChildren().addAll(titulo, filas);
-        return box;
+        contenedor.getChildren().addAll(titulo, tabla);
+
+        return contenedor;
     }
+    
     /////////////////////////////////////
     /**
     * Crea una fila individual dentro del bloque de categoría.
     * La descripción puede limpiarse quitando la palabra clave de la categoría.
     */
-   private Node crearFilaCategoria(Existencia existencia, Categoria categoria, boolean ultimaFila) {
-       GridPane fila = new GridPane();
-       fila.setHgap(4);
-       fila.setAlignment(Pos.CENTER_LEFT);
-       fila.setMaxWidth(Double.MAX_VALUE);
-       fila.setPadding(new Insets(0, 3, 0, 3));
+    private Node crearFilaCategoria(
+            Existencia existencia,
+            Categoria categoria,
+            boolean ultimaFila
+    ) {
+        GridPane fila = new GridPane();
 
-       String bordeInferior = ultimaFila ? "0" : "1";
-       fila.setStyle(
-               "-fx-border-color: #c0c0c0; " +
-               "-fx-background-color: #f4f4f4;"
-       );
+        fila.setHgap(2);
+        fila.setVgap(0);
+        fila.setAlignment(Pos.CENTER_LEFT);
+        fila.setMaxWidth(Double.MAX_VALUE);
+        fila.setMinHeight(25);
+        fila.setPrefHeight(25);
+        fila.setPadding(new Insets(0, 3, 0, 3));
 
-       Label lblDescripcion = new Label(limpiarDescripcionParaCategoria(existencia, categoria));
-       lblDescripcion.setWrapText(false);
-       lblDescripcion.setMaxWidth(Double.MAX_VALUE);
+        fila.setStyle(
+                "-fx-border-color: #c0c0c0;" +
+                "-fx-border-width: 1 1 0 1;" +
+                "-fx-background-color: #f4f4f4;"
+        );
 
-       Label lblExistencia = new Label(formatearExistencia(existencia.getExistenciaOrZero()));
-       lblExistencia.setAlignment(Pos.CENTER_RIGHT);
-       lblExistencia.setMinWidth(34);
-       lblExistencia.setPrefWidth(34);
-       lblExistencia.setMaxWidth(34);
+        if (ultimaFila) {
+            fila.setStyle(
+                    "-fx-border-color: #c0c0c0;" +
+                    "-fx-border-width: 1;" +
+                    "-fx-background-color: #f4f4f4;"
+            );
+        }
 
-       aplicarColorStock(lblDescripcion, lblExistencia, existencia, categoria);
+        Label lblDescripcion = new Label(
+                limpiarDescripcionParaCategoria(existencia, categoria)
+        );
 
-       GridPane.setHgrow(lblDescripcion, Priority.ALWAYS);
+        lblDescripcion.setWrapText(false);
+        lblDescripcion.setMaxWidth(Double.MAX_VALUE);
+        lblDescripcion.setMinWidth(0);
 
-       fila.add(lblDescripcion, 0, 0);
-       fila.add(lblExistencia, 1, 0);
+        Label lblExistencia = new Label(
+                formatearExistencia(existencia.getExistenciaOrZero())
+        );
 
-       return fila;
-   }
+        lblExistencia.setAlignment(Pos.CENTER_RIGHT);
+        lblExistencia.setMinWidth(30);
+        lblExistencia.setPrefWidth(30);
+        lblExistencia.setMaxWidth(30);
+
+        aplicarColorStock(
+                lblDescripcion,
+                lblExistencia,
+                existencia,
+                categoria
+        );
+
+        GridPane.setHgrow(lblDescripcion, Priority.ALWAYS);
+
+        fila.add(lblDescripcion, 0, 0);
+        fila.add(lblExistencia, 1, 0);
+
+        return fila;
+    }
 
    private void aplicarColorStock(Label lblDescripcion, Label lblExistencia, Existencia existencia, Categoria categoria) {
        int existenciaActual = existencia.getExistenciaOrZero() != null
@@ -829,14 +871,14 @@ public class MainController {
        Integer stockDeseado = existencia.getStockDeseado();
 
        String estiloDescripcion =
-               "-fx-font-size: 21px; " +
+               "-fx-font-size: 24px; " +
                "-fx-font-weight: 600; " +
                "-fx-text-fill: #222222; " +
                "-fx-padding: 0 0 0 0;";
        
 
        String estiloExistencia =
-               "-fx-font-size: 20px; " +
+               "-fx-font-size: 23px; " +
                "-fx-font-weight: bold; " +
                "-fx-text-fill: #222222; " +
                "-fx-padding: 0 0 0 0;";
@@ -882,8 +924,8 @@ public class MainController {
            aplicarStockLocal(existencias);
            List<Existencia> pendientes = new ArrayList<>(existencias);
 
-           HBox layoutColumnas = new HBox(12);
-           layoutColumnas.setPadding(new Insets(8, 10, 8, 10));
+           HBox layoutColumnas = new HBox(6);
+           layoutColumnas.setPadding(new Insets(5, 6, 5, 6));
            layoutColumnas.setAlignment(Pos.TOP_LEFT);
            layoutColumnas.setStyle("-fx-background-color: transparent;");
 
@@ -891,11 +933,12 @@ public class MainController {
            VBox columna2 = crearColumnaReporte();
            VBox columna3 = crearColumnaReporte();
            VBox columna4 = crearColumnaReporte();
+           VBox columna5 = crearColumnaReporte();
 
-           List<VBox> columnas = List.of(columna1, columna2, columna3, columna4);
+           List<VBox> columnas = List.of(columna1, columna2, columna3, columna4, columna5);
 
            int[] cargas = new int[]{0, 0, 0, 0};
-           int maxCeldasPorColumna = 23;
+           int maxCeldasPorColumna = 35;
            int indiceColumnaActual = 0;
 
            for (Categoria categoria : categorias) {
@@ -909,10 +952,11 @@ public class MainController {
                int celdasBloque = calcularCeldasBloque(registrosCategoria.size());
 
                if (indiceColumnaActual < columnas.size() - 1
-                       && cargas[indiceColumnaActual] > 0
-                       && (cargas[indiceColumnaActual] + celdasBloque) > maxCeldasPorColumna) {
-                   indiceColumnaActual++;
-               }
+                        && cargas[indiceColumnaActual] > 0
+                        && cargas[indiceColumnaActual] + celdasBloque > maxCeldasPorColumna) {
+
+                    indiceColumnaActual++;
+                }
 
                columnas.get(indiceColumnaActual).getChildren().add(bloque);
                cargas[indiceColumnaActual] += celdasBloque;
@@ -923,7 +967,8 @@ public class MainController {
            if (columna1.getChildren().isEmpty()
                    && columna2.getChildren().isEmpty()
                    && columna3.getChildren().isEmpty()
-                   && columna4.getChildren().isEmpty()) {
+                   && columna4.getChildren().isEmpty()
+                   && columna5.getChildren().isEmpty()) {
 
                Label lbl = new Label("No hay existencias para mostrar en la sucursal seleccionada.");
                lbl.setStyle("-fx-font-size: 16px; -fx-text-fill: #30505b;");
@@ -931,12 +976,13 @@ public class MainController {
                return;
            }
 
-           layoutColumnas.getChildren().addAll(columna1, columna2, columna3, columna4);
+           layoutColumnas.getChildren().addAll(columna1, columna2, columna3, columna4, columna5);
 
            HBox.setHgrow(columna1, Priority.ALWAYS);
            HBox.setHgrow(columna2, Priority.ALWAYS);
            HBox.setHgrow(columna3, Priority.ALWAYS);
            HBox.setHgrow(columna4, Priority.ALWAYS);
+           HBox.setHgrow(columna5, Priority.ALWAYS);
 
            ScrollPane scrollPane = crearContenedorScrollable(layoutColumnas);
            setContenidoCentral(scrollPane);
