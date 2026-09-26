@@ -13,6 +13,16 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Servicio central orquestador de la sincronización de inventarios.
+ *
+ * Responsabilidades:
+ * - Recorrer todas las sucursales activas con contraseña válida.
+ * - Conectarse a cada SQL Server remoto mediante {@link SqlServerSucursalClient}.
+ * - Obtener las existencias en almacén y descontar las ventas de cuentas abiertas.
+ * - Persistir las existencias calculadas en la base de datos local MySQL.
+ * - Registrar errores por sucursal en {@link AppState} sin interrumpir las demás.
+ */
 public class InventarioSyncService {
 
     private final SqlServerSucursalClient sqlServerSucursalClient;
@@ -33,6 +43,10 @@ public class InventarioSyncService {
         this.appState = appState;
     }
 
+    /**
+     * Ejecuta el ciclo de sincronización sobre todas las sucursales activas.
+     * Limpia los errores previos y acumula los que ocurran durante la iteración.
+     */
     public void sincronizarTodas() {
         appState.clearErroresSincronizacion();
 

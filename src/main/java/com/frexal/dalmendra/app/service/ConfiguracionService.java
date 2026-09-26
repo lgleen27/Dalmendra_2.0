@@ -6,6 +6,10 @@ import com.frexal.dalmendra.app.repository.ConfiguracionRepository;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Servicio encargado de gestionar los parámetros de configuración de Dalmendra,
+ * sincronizando los valores entre la base de datos MySQL y la memoria reactiva ({@link AppState}).
+ */
 public class ConfiguracionService {
 
     private final ConfiguracionRepository configuracionRepository;
@@ -16,6 +20,11 @@ public class ConfiguracionService {
         this.appState = appState;
     }
 
+    /**
+     * Carga todas las configuraciones almacenadas en base de datos hacia el estado global {@link AppState}.
+     *
+     * @throws SQLException Si ocurre un error al consultar MySQL.
+     */
     public void cargarConfiguracion() throws SQLException {
         List<Configuracion> configuraciones = configuracionRepository.findAll();
 

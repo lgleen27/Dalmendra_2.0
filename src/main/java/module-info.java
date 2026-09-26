@@ -1,3 +1,8 @@
+/**
+ * Definición del módulo Java de Dalmendra.
+ * Configura las dependencias requeridas (JavaFX, JDBC, Jackson, HttpClient)
+ * y abre los paquetes necesarios por reflexión para FXMLLoader, TableView y ObjectMapper.
+ */
 module com.frexal.dalmendra.MainLauncher {
     requires javafx.controls;
     requires javafx.fxml;

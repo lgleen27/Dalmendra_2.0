@@ -3,12 +3,24 @@ package com.frexal.dalmendra.app.dto.reporte;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DTO que representa una Categoría y su colección de productos en el reporte JSON.
+ */
 public class CategoriaReporteJsonDto {
 
+    /** ID de la categoría. */
     private Long categoriaId;
+
+    /** Nombre de la categoría. */
     private String nombre;
+
+    /** Palabra clave utilizada para la agrupación. */
     private String palabraClave;
+
+    /** Cantidad de productos clasificados en esta categoría. */
     private Integer totalProductos;
+
+    /** Lista de productos asociados. */
     private List<ProductoReporteJsonDto> productos = new ArrayList<>();
 
     public Long getCategoriaId() {

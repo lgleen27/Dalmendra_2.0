@@ -5,8 +5,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+/**
+ * Inicializador del esquema de base de datos local en MySQL.
+ * Se encarga de crear la base de datos si no existe, generar todas las tablas
+ * iniciales y aplicar migraciones DDL automáticas si se agregan nuevas columnas.
+ */
 public class MySqlSchemaInitializer {
 
+    /**
+     * Orquesta el proceso de inicialización:
+     * 1. Verifica y crea la base de datos.
+     * 2. Crea las tablas fundamentales.
+     * 3. Aplica parches y columnas nuevas de esquemas anteriores si se requieren.
+     *
+     * @throws SQLException Si falla alguna sentencia SQL o no hay conexión con el servidor.
+     */
     public void initialize() throws SQLException {
         createDatabaseIfNotExists();
 

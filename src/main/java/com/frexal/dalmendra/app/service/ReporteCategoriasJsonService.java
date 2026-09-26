@@ -9,6 +9,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+/**
+ * Servicio encargado de serializar las estructuras de datos de los reportes a formato JSON
+ * en el disco local utilizando la biblioteca FasterXML Jackson.
+ */
 public class ReporteCategoriasJsonService {
 
     private final ObjectMapper objectMapper;
@@ -20,6 +24,13 @@ public class ReporteCategoriasJsonService {
         this.objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
+    /**
+     * Guarda un mapa genérico de datos como archivo JSON formateado (pretty-printed).
+     *
+     * @param datos Mapa clave-valor de datos.
+     * @param rutaArchivo Ruta de destino en el sistema de archivos.
+     * @throws IOException Si ocurre un error de escritura.
+     */
     public void guardarJson(Map<String, Object> datos, String rutaArchivo) throws IOException {
         File archivo = new File(rutaArchivo);
 

@@ -13,6 +13,15 @@ import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
+/**
+ * Controlador de la vista modal de Configuración del Sistema ({@code ConfiguracionView.fxml}).
+ *
+ * Permite gestionar:
+ * - Tipo de reporte inicial al arrancar la aplicación.
+ * - Intervalo en minutos para la sincronización periódica de inventarios.
+ * - Tiempo de rotación entre sucursales.
+ * - Parámetros de conexión a la API REST externa (URL y Token Bearer).
+ */
 public class ConfiguracionController {
 
     @FXML

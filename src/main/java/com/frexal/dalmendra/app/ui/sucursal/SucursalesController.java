@@ -34,6 +34,16 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Controlador de la vista modal de administración de Sucursales ({@code SucursalesView.fxml}).
+ *
+ * Funcionalidades:
+ * - Altas, bajas y modificaciones de sucursales físicas.
+ * - Captura y edición de credenciales de conexión remota a SQL Server.
+ * - Asignación de color distintivo por sucursal mediante {@link javafx.scene.control.ColorPicker}.
+ * - Prueba de conectividad directa en tiempo real mediante socket y JDBC.
+ * - Reordenamiento de las sucursales para el ComboBox del tablero principal.
+ */
 public class SucursalesController {
 
     @FXML private Label lblId;

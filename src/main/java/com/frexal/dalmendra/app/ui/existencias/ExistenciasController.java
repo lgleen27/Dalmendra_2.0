@@ -41,6 +41,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Controlador de la vista modal de consulta y ajuste de Existencias ({@code ExistenciasView.fxml}).
+ *
+ * Funcionalidades:
+ * - Filtrar existencias por sucursal y categoría (o todas).
+ * - Abrir diálogo de configuración de Stock Mínimo y Stock Deseado por artículo.
+ * - Activar modo de reordenamiento de filas para cambiar la prioridad en pantalla.
+ */
 public class ExistenciasController {
 
     private static final Long CATEGORIA_TODAS_ID = -1L;

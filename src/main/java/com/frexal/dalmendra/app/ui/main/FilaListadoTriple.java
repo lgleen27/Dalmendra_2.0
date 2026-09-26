@@ -2,10 +2,19 @@ package com.frexal.dalmendra.app.ui.main;
 
 import com.frexal.dalmendra.app.model.Existencia;
 
+/**
+ * Modelo contenedor para presentar el listado general en formato de 3 columnas paralelas.
+ * Cada instancia de esta clase agrupa hasta tres objetos {@link Existencia} en una misma fila visual.
+ */
 public class FilaListadoTriple {
 
+    /** Primer artículo de la fila (columna izquierda). */
     private final Existencia item1;
+
+    /** Segundo artículo de la fila (columna central), puede ser {@code null}. */
     private final Existencia item2;
+
+    /** Tercer artículo de la fila (columna derecha), puede ser {@code null}. */
     private final Existencia item3;
 
     public FilaListadoTriple(Existencia item1, Existencia item2, Existencia item3) {

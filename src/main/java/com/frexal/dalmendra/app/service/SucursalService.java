@@ -10,6 +10,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio de lógica de negocio para la administración y validación de sucursales físicas.
+ * Mantiene la coherencia de datos, autoincremento de orden y sincronización con el {@link AppState}.
+ */
 public class SucursalService {
 
     private final SucursalRepository sucursalRepository;
@@ -20,6 +24,12 @@ public class SucursalService {
         this.appState = appState;
     }
 
+    /**
+     * Consulta todas las sucursales en base de datos, las ordena y actualiza la lista en {@link AppState}.
+     *
+     * @return Lista ordenada de sucursales.
+     * @throws SQLException Si ocurre un error al consultar la base de datos.
+     */
     public List<Sucursal> cargarSucursales() throws SQLException {
         List<Sucursal> sucursales = sucursalRepository.findAll().stream()
                 .sorted(Comparator.comparing(

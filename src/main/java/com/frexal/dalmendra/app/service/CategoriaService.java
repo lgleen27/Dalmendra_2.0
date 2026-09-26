@@ -6,6 +6,10 @@ import com.frexal.dalmendra.app.repository.CategoriaRepository;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Servicio de lógica de negocio para la gestión y validación de categorías.
+ * Aplica reglas de negocio antes de persistir o modificar registros en base de datos.
+ */
 public class CategoriaService {
 
     private final CategoriaRepository categoriaRepository;
@@ -14,6 +18,12 @@ public class CategoriaService {
         this.categoriaRepository = categoriaRepository;
     }
 
+    /**
+     * Retorna todas las categorías existentes.
+     *
+     * @return Lista de categorías.
+     * @throws SQLException Si ocurre un error al consultar.
+     */
     public List<Categoria> findAll() throws SQLException {
         return categoriaRepository.findAll();
     }

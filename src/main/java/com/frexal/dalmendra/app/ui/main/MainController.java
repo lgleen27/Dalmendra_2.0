@@ -85,21 +85,27 @@ public class MainController {
     // Componentes visuales definidos en MainView.fxml
     // ======================================================
 
+    /** Etiqueta superior que indica el nombre del reporte o listado que se está visualizando. */
     @FXML
     private Label lblVistaActual;
 
+    /** Etiqueta de la barra de estado inferior que muestra la actividad actual del sistema. */
     @FXML
     private Label lblEstado;
 
+    /** Etiqueta que informa el estado de la sincronización (ej. "Correcta", "Sincronizando...", "Con errores"). */
     @FXML
     private Label lblSync;
 
+    /** Etiqueta que muestra la fecha y hora de la última sincronización correcta de la sucursal activa. */
     @FXML
     private Label lblUltimaSync;
 
+    /** Contenedor principal donde se renderizan dinámicamente los tableros de reportes y tablas. */
     @FXML
     private StackPane pnlCentro;
 
+    /** Selector desplegable con la lista de sucursales activas. */
     @FXML
     private ComboBox<Sucursal> cmbSucursales;
 
@@ -411,6 +417,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Manejador de evento al pulsar el botón de "Reporte por Categorías".
+     * Muestra las existencias agrupadas y distribuidas en columnas con semáforos de stock.
+     */
     @FXML
     private void onReportePorCategorias() {
         if (sucursalService.haySucursalesActivas()) {
@@ -420,6 +430,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Manejador de evento al pulsar el botón de "Listado con Código".
+     * Muestra la tabla triple incluyendo la columna de código de cada insumo.
+     */
     @FXML
     private void onListadoConCodigo() {
         if (sucursalService.haySucursalesActivas()) {
@@ -429,6 +443,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Manejador de evento al pulsar el botón de "Listado sin Código".
+     * Muestra la tabla triple ocultando la columna de código para una vista más limpia.
+     */
     @FXML
     private void onListadoSinCodigo() {
         if (sucursalService.haySucursalesActivas()) {
@@ -564,6 +582,11 @@ public class MainController {
     // Apertura de catálogos y configuración
     // ======================================================
 
+    /**
+     * Abre la ventana modal para la gestión de Sucursales ({@code SucursalesView.fxml}).
+     * Pausa la sincronización automática mientras la ventana está visible y refresca
+     * las sucursales al cerrarse.
+     */
     @FXML
     private void onSucursales() {
         try {
@@ -607,6 +630,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Abre la ventana modal para la gestión de Categorías ({@code CategoriasView.fxml}).
+     * Permite editar palabras clave y reordenar columnas del tablero.
+     */
     @FXML
     private void onCategorias() {
         try {
@@ -634,6 +661,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Abre la ventana modal para la consulta y ajuste de Existencias ({@code ExistenciasView.fxml}).
+     * Permite fijar stock mínimo y deseado, y reordenar artículos por sucursal.
+     */
     @FXML
     private void onArticulos() {
         try {
@@ -664,6 +695,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Manejador de evento al pulsar el botón de "Configuración".
+     * Delega la apertura de la ventana de configuración del sistema.
+     */
     @FXML
     private void onConfiguracion() {
         abrirVistaConfiguracion();
@@ -862,7 +897,18 @@ public class MainController {
         return fila;
     }
 
-   private void aplicarColorStock(Label lblDescripcion, Label lblExistencia, Existencia existencia, Categoria categoria) {
+    /**
+     * Evalúa los niveles de stock de un artículo y aplica el semáforo de color correspondiente:
+     * - Fondo rojo pastel (#ffb3b3) si la existencia es menor o igual al Stock Mínimo (Crítico).
+     * - Fondo amarillo pastel (#fff3a3) si la existencia es menor o igual al Stock Deseado (Alerta preventiva).
+     * - Sin color de fondo si el stock supera el nivel deseado o no tiene umbrales fijados.
+     *
+     * @param lblDescripcion Etiqueta visual de la descripción del insumo.
+     * @param lblExistencia Etiqueta visual del valor numérico de la existencia.
+     * @param existencia Objeto de dominio con el stock actual y umbrales.
+     * @param categoria Categoría a la que pertenece el insumo.
+     */
+    private void aplicarColorStock(Label lblDescripcion, Label lblExistencia, Existencia existencia, Categoria categoria) {
        int existenciaActual = existencia.getExistenciaOrZero() != null
                ? existencia.getExistenciaOrZero().intValue()
                : 0;
@@ -1404,6 +1450,10 @@ public class MainController {
         return table;
     }
     
+    /**
+     * Construye el reporte completo DTO de todas las sucursales y categorías activas,
+     * serializa la estructura a JSON en el disco local y dispara el envío HTTP hacia la API.
+     */
     private void probarGeneracionJsonReal() {
         try {
             ReporteCategoriasDataService dataService = new ReporteCategoriasDataService(
@@ -1428,6 +1478,10 @@ public class MainController {
         }
     }
 
+    /**
+     * Transmite el archivo JSON de existencias hacia la API web externa (ej. Laravel).
+     * Lee la URL y el Bearer Token configurados en la base de datos local.
+     */
     private void probarEnvioJsonALaravelLocal() {
         try {
             String apiUrl = configuracionService.getValorConfiguracion("ApiUrlReporteCategorias");
@@ -1460,6 +1514,14 @@ public class MainController {
         }
     }
 
+    /**
+     * Resuelve la ruta del sistema de archivos donde se almacenará el reporte JSON.
+     * En Windows utiliza {@code %APPDATA%/Dalmendra/reportes/reporte_categorias.json},
+     * o el directorio del usuario en otros sistemas operativos.
+     *
+     * @return Path absoluto del archivo JSON.
+     * @throws Exception Si ocurre un error al crear los directorios.
+     */
     private Path obtenerRutaJsonReporteCategorias() throws Exception {
         String appData = System.getenv("APPDATA");
         Path carpetaBase;
@@ -1473,12 +1535,25 @@ public class MainController {
         Files.createDirectories(carpetaBase);
         return carpetaBase.resolve("reporte_categorias.json");
     }
-    
+
+    /**
+     * Configura oyentes de eventos en una ventana modal (Stage) para pausar la
+     * sincronización en segundo plano mientras el modal está abierto y reactivarla
+     * al cerrarse.
+     *
+     * @param stage Ventana modal que suspenderá temporalmente la sincronización.
+     */
     private void configurarPausaSincronizacionEnVentana(Stage stage) {
         stage.setOnShown(event -> appState.setBanActualizacion(false));
         stage.setOnHidden(event -> appState.setBanActualizacion(true));
     }
-    
+
+    /**
+     * Asocia los umbrales de stock mínimo y deseado (almacenados en la tabla {@code existencias_stock})
+     * a cada objeto {@link Existencia} de la lista proporcionada.
+     *
+     * @param existencias Lista de existencias de la sucursal activa.
+     */
     private void aplicarStockLocal(List<Existencia> existencias) {
         if (existencias == null || existencias.isEmpty()) {
             return;

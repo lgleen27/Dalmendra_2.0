@@ -1,10 +1,21 @@
 package com.frexal.dalmendra.app.model;
 
+/**
+ * Entidad que almacena la prioridad u orden secuencial asignado a un artículo
+ * dentro de una sucursal para ordenar las filas en pantalla.
+ */
 public class OrdenExistencia {
 
+    /** Identificador único autoincrementable. */
     private Long id;
+
+    /** ID de la sucursal donde aplica el orden. */
     private Long sucursalId;
+
+    /** Código del insumo/artículo. */
     private String codigo;
+
+    /** Número de posición u orden ascendente. */
     private Integer orden;
 
     public OrdenExistencia() {

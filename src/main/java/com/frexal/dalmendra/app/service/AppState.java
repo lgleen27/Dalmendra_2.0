@@ -11,6 +11,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Almacén del estado reactivo global en memoria para la sesión activa de la aplicación.
+ *
+ * Mantiene:
+ * - Listas cacheadas de sucursales, existencias, categorías y órdenes.
+ * - Sucursal activa actualmente seleccionada.
+ * - Banderas de control de interfaz (ej. {@code banActualizacion} para pausar sincronización).
+ * - Errores acumulados durante el ciclo de sincronización actual.
+ */
 public class AppState {
 
     private String nombrePrograma = "Dalmendra";
@@ -28,6 +37,8 @@ public class AppState {
     private boolean hayErrorSincronizacion;
     private boolean estaAbiertoFrmListado;
     private boolean estaAbiertoFrmCategorias;
+
+    /** Bandera de control: si es {@code false}, la sincronización automática se omite temporalmente. */
     private boolean banActualizacion = true;
 
     private String idDbSelect = "1";

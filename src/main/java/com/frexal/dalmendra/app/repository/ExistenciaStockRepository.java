@@ -7,8 +7,21 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Repositorio de acceso a datos para la entidad {@link ExistenciaStock} en MySQL.
+ * Administra la persistencia de los umbrales de stock mínimo y deseado usando
+ * sentencias {@code INSERT ... ON DUPLICATE KEY UPDATE}.
+ */
 public class ExistenciaStockRepository {
 
+    /**
+     * Busca la configuración de stock para un artículo en una sucursal específica.
+     *
+     * @param sucursalId ID de la sucursal.
+     * @param codigo Código del insumo.
+     * @return Objeto {@link ExistenciaStock} si existe, o {@code null}.
+     * @throws SQLException Si ocurre un error SQL.
+     */
     public ExistenciaStock findBySucursalIdAndCodigo(Long sucursalId, String codigo) throws SQLException {
         String sql = "SELECT * FROM existencias_stock WHERE sucursal_id = ? AND codigo = ?";
 

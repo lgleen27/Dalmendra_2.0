@@ -3,17 +3,40 @@ package com.frexal.dalmendra.app.model;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
+/**
+ * Entidad que representa una Sucursal física y sus credenciales de conexión
+ * remota hacia el servidor SQL Server donde reside su sistema POS.
+ */
 public class Sucursal {
 
+    /** Identificador único autoincrementable. */
     private Long id;
+
+    /** Nombre comercial o descriptivo de la sucursal. */
     private String nombreSucursal;
+
+    /** Servidor SQL Server (puede ser IP, Hostname, o formato Host\\Instancia[:Puerto]). */
     private String dataSource;
+
+    /** Nombre de la base de datos en SQL Server (Catálogo). */
     private String catalog;
+
+    /** Usuario de conexión a SQL Server. */
     private String userId;
+
+    /** Contraseña de conexión a SQL Server. */
     private String password;
+
+    /** Orden relativo en el selector y listados. */
     private Integer orden;
+
+    /** Fecha y hora en la que se completó con éxito la última sincronización. */
     private LocalDateTime fechaHoraActualizacion;
+
+    /** Código hexadecimal del color identificativo de la sucursal (ej. #FF5733). */
     private String color;
+
+    /** Indica si la sucursal está activa para sincronización y consulta. */
     private Boolean activa;
 
     public Sucursal() {

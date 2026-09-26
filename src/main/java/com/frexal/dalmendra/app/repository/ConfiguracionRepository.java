@@ -12,8 +12,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repositorio de acceso a datos para la entidad {@link Configuracion} en MySQL.
+ * Administra los parámetros globales mediante búsquedas por descripción y upserts.
+ */
 public class ConfiguracionRepository {
 
+    /**
+     * Retorna todas las configuraciones almacenadas.
+     *
+     * @return Lista de configuraciones.
+     * @throws SQLException Si ocurre un error SQL.
+     */
     public List<Configuracion> findAll() throws SQLException {
         String sql = "SELECT * FROM configuracion ORDER BY id ASC";
         List<Configuracion> items = new ArrayList<>();

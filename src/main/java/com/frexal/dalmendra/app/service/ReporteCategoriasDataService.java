@@ -22,6 +22,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Servicio encargado de ensamblar el reporte consolidado de categorías y existencias.
+ *
+ * Realiza:
+ * - Filtrado de sucursales y categorías activas.
+ * - Asociación de productos a su categoría según coincidencia con la palabra clave.
+ * - Inyección de niveles de stock configurados localmente (mínimo y deseado).
+ * - Cálculo del estado de stock (MINIMO_CRITICO, BAJO_DESEADO, NORMAL, SIN_CONFIGURAR).
+ */
 public class ReporteCategoriasDataService {
 
     private final SucursalRepository sucursalRepository;
@@ -39,6 +48,13 @@ public class ReporteCategoriasDataService {
         this.existenciaStockRepository = existenciaStockRepository;
     }
 
+    /**
+     * Construye la estructura completa del reporte en objetos DTO
+     * listos para ser serializados a formato JSON.
+     *
+     * @return DTO raíz con todas las sucursales, categorías y artículos clasificados.
+     * @throws SQLException Si ocurre un error al consultar los repositorios.
+     */
     public ReporteCategoriasJsonDto construirReporteCompleto() throws SQLException {
         ReporteCategoriasJsonDto reporte = new ReporteCategoriasJsonDto();
         reporte.setFechaGeneracion(LocalDateTime.now());

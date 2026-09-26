@@ -24,6 +24,15 @@ import javafx.scene.Scene;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
 
+/**
+ * Controlador de la vista modal de administración de Categorías ({@code CategoriasView.fxml}).
+ *
+ * Permite:
+ * - Operaciones CRUD completas sobre las categorías (crear, editar, eliminar, activar/inactivar).
+ * - Configurar la {@code palabraClave} para la clasificación dinámica de existencias.
+ * - Reordenar visualmente las categorías (mover arriba, abajo, inicio y fin) para definir
+ *   el orden en que aparecerán las columnas en el tablero principal.
+ */
 public class CategoriasController {
 
     @FXML private Label lblId;

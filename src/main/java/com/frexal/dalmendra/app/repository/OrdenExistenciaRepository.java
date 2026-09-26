@@ -11,8 +11,18 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Repositorio de acceso a datos para la entidad {@link OrdenExistencia} en MySQL.
+ * Administra el orden prioritario de los insumos por sucursal.
+ */
 public class OrdenExistenciaRepository {
 
+    /**
+     * Retorna todas las configuraciones de orden registradas.
+     *
+     * @return Lista de órdenes por sucursal y código.
+     * @throws SQLException Si ocurre un error SQL.
+     */
     public List<OrdenExistencia> findAll() throws SQLException {
         String sql = "SELECT * FROM orden_existencias ORDER BY sucursal_id ASC, orden ASC, codigo ASC";
         List<OrdenExistencia> items = new ArrayList<>();

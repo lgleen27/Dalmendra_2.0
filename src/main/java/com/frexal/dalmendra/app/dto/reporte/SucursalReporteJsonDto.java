@@ -4,14 +4,31 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * DTO que representa una Sucursal dentro del reporte JSON, conteniendo
+ * sus metadatos y la lista de categorías con sus respectivos productos.
+ */
 public class SucursalReporteJsonDto {
 
+    /** ID de la sucursal. */
     private Long sucursalId;
+
+    /** Nombre descriptivo de la sucursal. */
     private String sucursalNombre;
+
+    /** Estado activo de la sucursal. */
     private Boolean activa;
+
+    /** Timestamp de la última sincronización sin errores. */
     private LocalDateTime ultimaSincronizacionCorrecta;
+
+    /** Total de categorías con productos encontradas. */
     private Integer totalCategorias;
+
+    /** Total general de productos clasificados en la sucursal. */
     private Integer totalProductos;
+
+    /** Lista de categorías con sus productos correspondientes. */
     private List<CategoriaReporteJsonDto> categorias = new ArrayList<>();
 
     public Long getSucursalId() {

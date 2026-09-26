@@ -6,6 +6,9 @@ import com.frexal.dalmendra.app.repository.OrdenExistenciaRepository;
 import java.sql.SQLException;
 import java.util.List;
 
+/**
+ * Servicio encargado de gestionar y autocalcular el orden visual de los artículos por sucursal.
+ */
 public class OrdenExistenciaService {
 
     private final OrdenExistenciaRepository ordenRepository;
@@ -16,6 +19,11 @@ public class OrdenExistenciaService {
         this.appState = appState;
     }
 
+    /**
+     * Carga todos los órdenes registrados y actualiza la lista en memoria en {@link AppState}.
+     *
+     * @throws SQLException Si ocurre un error al consultar la base de datos.
+     */
     public void cargarOrdenes() throws SQLException {
         List<OrdenExistencia> ordenes = ordenRepository.findAll();
         appState.setOrdenExistencias(ordenes);

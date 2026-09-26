@@ -11,8 +11,25 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Cliente JDBC especializado en la comunicación con instancias remotas de Microsoft SQL Server
+ * correspondientes a cada sucursal (típicamente bases de datos de punto de venta como Soft Restaurant).
+ *
+ * Responsabilidades:
+ * - Construir URLs de conexión seguras tolerando instancias con nombre y puertos no estándar.
+ * - Probar la conectividad de red con timeouts estrictos para no congelar la app.
+ * - Consultar existencias físicas en el almacén de insumos (idalmacen = 3).
+ * - Consultar ventas en cuentas abiertas/temporales no canceladas para descontar insumos en tiempo real.
+ */
 public class SqlServerSucursalClient {
 
+    /**
+     * Valida si es posible establecer conexión con el servidor SQL Server de la sucursal.
+     *
+     * @param sucursal Datos de conexión de la sucursal.
+     * @return {@code true} si la conexión fue exitosa.
+     * @throws RuntimeException Si ocurre un error de comunicación o autenticación.
+     */
     public boolean validarConexion(Sucursal sucursal) {
         try (Connection cn = openConnection(sucursal)) {
             return true;
@@ -21,6 +38,12 @@ public class SqlServerSucursalClient {
         }
     }
 
+    /**
+     * Valida la conexión lanzando una {@link SQLException} nativa sin encapsular.
+     *
+     * @param sucursal Datos de conexión.
+     * @throws SQLException Si falla la conexión.
+     */
     public void validarConexionOrThrow(Sucursal sucursal) throws SQLException {
         try (Connection cn = openConnection(sucursal)) {
             // conexión correcta

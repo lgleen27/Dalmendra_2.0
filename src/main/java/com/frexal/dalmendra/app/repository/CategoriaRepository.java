@@ -7,8 +7,18 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Repositorio de acceso a datos para la entidad {@link Categoria} en MySQL.
+ * Proporciona métodos para consultar categorías activas, guardar cambios y actualizar su orden.
+ */
 public class CategoriaRepository {
 
+    /**
+     * Retorna todas las categorías registradas ordenadas ascendentemente.
+     *
+     * @return Lista de categorías.
+     * @throws SQLException Si ocurre un error SQL.
+     */
     public List<Categoria> findAll() throws SQLException {
         String sql = "SELECT * FROM categorias ORDER BY orden ASC";
         List<Categoria> items = new ArrayList<>();

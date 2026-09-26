@@ -4,10 +4,19 @@
  */
 package com.frexal.dalmendra.app.model;
 
+/**
+ * Entidad que almacena pares clave-valor de configuración global del sistema
+ * (por ejemplo tiempos de sincronización, reporte inicial, URLs de API).
+ */
 public class Configuracion {
 
+    /** Identificador único del parámetro. */
     private Long id;
+
+    /** Clave o nombre identificador de la configuración (único). */
     private String descripcion;
+
+    /** Valor asignado al parámetro. */
     private String valor;
 
     public Configuracion() {

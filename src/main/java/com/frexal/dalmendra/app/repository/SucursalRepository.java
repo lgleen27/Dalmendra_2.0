@@ -12,8 +12,18 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Repositorio de acceso a datos para la entidad {@link Sucursal} sobre la base de datos MySQL local.
+ * Implementa operaciones CRUD, actualización de orden y persistencia de fecha de última sincronización.
+ */
 public class SucursalRepository {
 
+    /**
+     * Obtiene todas las sucursales ordenadas por su campo de orden y nombre.
+     *
+     * @return Lista completa de sucursales.
+     * @throws SQLException Si ocurre un error al consultar la base de datos.
+     */
     public List<Sucursal> findAll() throws SQLException {
         String sql = "SELECT * FROM sucursales ORDER BY orden ASC, nombre_sucursal ASC";
         List<Sucursal> items = new ArrayList<>();

@@ -12,8 +12,19 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Repositorio de acceso a datos para la entidad {@link Existencia} en MySQL.
+ * Administra las existencias sincronizadas por sucursal, búsquedas por palabra clave y borrado masivo por sucursal.
+ */
 public class ExistenciaRepository {
 
+    /**
+     * Retorna todas las existencias pertenecientes a una sucursal, ordenadas por su posición y código.
+     *
+     * @param sucursalId ID de la sucursal.
+     * @return Lista de existencias de la sucursal.
+     * @throws SQLException Si ocurre un error al consultar la base de datos.
+     */
     public List<Existencia> findBySucursalId(Long sucursalId) throws SQLException {
         String sql = "SELECT * FROM existencias WHERE sucursal_id = ? ORDER BY orden ASC, codigo ASC";
         List<Existencia> items = new ArrayList<>();
