@@ -736,7 +736,7 @@ public class MainController {
      * Crea una columna visual usada en el reporte por categorías.
      */
     private VBox crearColumnaReporte() {
-        VBox columna = new VBox(6);
+        VBox columna = new VBox(0);
         columna.setAlignment(Pos.TOP_LEFT);
         columna.setFillWidth(true);
         columna.setMaxWidth(Double.MAX_VALUE);
@@ -765,8 +765,8 @@ public class MainController {
 
         Label titulo = new Label(valor(categoria.getDescripcion()).toUpperCase());
         titulo.setMaxWidth(Double.MAX_VALUE);
-        titulo.setMinHeight(35);
-        titulo.setPrefHeight(35);
+        titulo.setMinHeight(33);
+        titulo.setPrefHeight(33);
 
         titulo.setStyle(
                 "-fx-font-size: 25px;" +
@@ -843,9 +843,9 @@ public class MainController {
         );
 
         lblExistencia.setAlignment(Pos.CENTER_RIGHT);
-        lblExistencia.setMinWidth(30);
-        lblExistencia.setPrefWidth(30);
-        lblExistencia.setMaxWidth(30);
+        lblExistencia.setMinWidth(40);
+        lblExistencia.setPrefWidth(40);
+        lblExistencia.setMaxWidth(40);
 
         aplicarColorStock(
                 lblDescripcion,
@@ -925,7 +925,7 @@ public class MainController {
            List<Existencia> pendientes = new ArrayList<>(existencias);
 
            HBox layoutColumnas = new HBox(6);
-           layoutColumnas.setPadding(new Insets(5, 6, 5, 6));
+           layoutColumnas.setPadding(new Insets(3, 6, 3, 6));
            layoutColumnas.setAlignment(Pos.TOP_LEFT);
            layoutColumnas.setStyle("-fx-background-color: transparent;");
 
@@ -938,7 +938,7 @@ public class MainController {
            List<VBox> columnas = List.of(columna1, columna2, columna3, columna4, columna5);
 
            int[] cargas = new int[]{0, 0, 0, 0};
-           int maxCeldasPorColumna = 35;
+           int maxCeldasPorColumna = 33;
            int indiceColumnaActual = 0;
 
            for (Categoria categoria : categorias) {
