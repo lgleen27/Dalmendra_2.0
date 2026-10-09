@@ -28,6 +28,10 @@ public class SucursalReporteJsonDto {
     /** Total general de productos clasificados en la sucursal. */
     private Integer totalProductos;
 
+    private Integer entradasComprasHoy;
+    private Integer entradasMovimientosHoy;
+    private Integer entradasTotalHoy;
+
     /** Lista de categorías con sus productos correspondientes. */
     private List<CategoriaReporteJsonDto> categorias = new ArrayList<>();
 
@@ -85,5 +89,29 @@ public class SucursalReporteJsonDto {
 
     public void setCategorias(List<CategoriaReporteJsonDto> categorias) {
         this.categorias = categorias;
+    }
+
+    public Integer getEntradasComprasHoy() {
+        return entradasComprasHoy;
+    }
+
+    public void setEntradasComprasHoy(Integer entradasComprasHoy) {
+        this.entradasComprasHoy = entradasComprasHoy;
+    }
+
+    public Integer getEntradasMovimientosHoy() {
+        return entradasMovimientosHoy;
+    }
+
+    public void setEntradasMovimientosHoy(Integer entradasMovimientosHoy) {
+        this.entradasMovimientosHoy = entradasMovimientosHoy;
+    }
+
+    public Integer getEntradasTotalHoy() {
+        return entradasTotalHoy;
+    }
+
+    public void setEntradasTotalHoy(Integer entradasTotalHoy) {
+        this.entradasTotalHoy = entradasTotalHoy;
     }
 }

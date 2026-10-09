@@ -2,6 +2,7 @@ package com.frexal.dalmendra.app.service;
 
 import com.frexal.dalmendra.app.model.Categoria;
 import com.frexal.dalmendra.app.model.Configuracion;
+import com.frexal.dalmendra.app.model.EntradasDelDia;
 import com.frexal.dalmendra.app.model.Existencia;
 import com.frexal.dalmendra.app.model.OrdenExistencia;
 import com.frexal.dalmendra.app.model.Sucursal;
@@ -47,6 +48,21 @@ public class AppState {
     private String firstReport = "PorCategorias";
     private String modoKiosco = "0";
     private String dividirCategoriasTablero = "0";
+    
+    private EntradasDelDia entradasDelDia = new EntradasDelDia(0, 0);
+    private java.util.Map<Long, EntradasDelDia> entradasPorSucursal = new java.util.HashMap<>();
+
+    public EntradasDelDia getEntradasDelDia() {
+        return entradasDelDia;
+    }
+
+    public void setEntradasDelDia(EntradasDelDia entradasDelDia) {
+        this.entradasDelDia = entradasDelDia;
+    }
+
+    public java.util.Map<Long, EntradasDelDia> getEntradasPorSucursal() {
+        return entradasPorSucursal;
+    }
 
     public String getNombrePrograma() {
         return nombrePrograma;

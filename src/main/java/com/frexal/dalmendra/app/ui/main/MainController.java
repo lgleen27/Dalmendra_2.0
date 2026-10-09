@@ -495,6 +495,25 @@ public class MainController {
             try {
                 inventarioSyncService.sincronizarTodas();
 
+                // NUEVO PROCESO AISLADO: Sincronizar reporte de entradas para todas las sucursales.
+                // Protegido en su propio try-catch para jamás afectar el sync principal.
+                try {
+                    SqlServerSucursalClient sqlClient = new SqlServerSucursalClient();
+                    for (Sucursal sucursal : appState.getSucursalesActivas()) {
+                        if (sucursal != null && sucursal.getId() != null) {
+                            try {
+                                com.frexal.dalmendra.app.model.EntradasDelDia entradas = sqlClient.consultarEntradasHoy(sucursal);
+                                appState.getEntradasPorSucursal().put(sucursal.getId(), entradas);
+                                // Mantener actualizacion de la seleccionada para la UI actual
+                                if (appState.getSucursalSeleccionada() != null && appState.getSucursalSeleccionada().getId().equals(sucursal.getId())) {
+                                    appState.setEntradasDelDia(entradas);
+                                }
+                            } catch (Exception ignoreInner) {}
+                        }
+                    }
+                } catch (Exception ignore) {
+                }
+
                 Platform.runLater(() -> {
                     refrescarSucursalSeleccionadaDesdeCombo();
 
@@ -825,6 +844,7 @@ public class MainController {
                 return;
             }
 
+            tablero.setEntradasDelDia(appState.getEntradasDelDia());
             tablero.updateData(categorias, existenciasFiltradas, permitirDividir);
             setContenidoCentral(tablero);
 
@@ -1248,6 +1268,23 @@ public class MainController {
             );
 
             ReporteCategoriasJsonDto reporte = dataService.construirReporteCompleto();
+            
+            // Inyectar entradas del dia
+            if (reporte != null && reporte.getSucursales() != null) {
+                for (com.frexal.dalmendra.app.dto.reporte.SucursalReporteJsonDto dto : reporte.getSucursales()) {
+                    com.frexal.dalmendra.app.model.EntradasDelDia entradas = appState.getEntradasPorSucursal().get(dto.getSucursalId());
+                    if (entradas != null) {
+                        dto.setEntradasComprasHoy(entradas.getCompras());
+                        dto.setEntradasMovimientosHoy(entradas.getMovimientos());
+                        dto.setEntradasTotalHoy(entradas.getTotal());
+                    } else {
+                        dto.setEntradasComprasHoy(0);
+                        dto.setEntradasMovimientosHoy(0);
+                        dto.setEntradasTotalHoy(0);
+                    }
+                }
+            }
+
             Path archivoJson = obtenerRutaJsonReporteCategorias();
 
             ReporteCategoriasJsonService jsonService = new ReporteCategoriasJsonService();

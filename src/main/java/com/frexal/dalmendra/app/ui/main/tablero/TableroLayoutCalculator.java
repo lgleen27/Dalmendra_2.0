@@ -5,7 +5,10 @@ import java.util.List;
 
 /**
  * Calculador de layout para el tablero de categorías.
- * Encuentra el tamaño de fuente óptimo para que todos los elementos encajen en el espacio disponible.
+ *
+ * Busca la combinación (número de columnas, tamaño de letra) más grande posible que:
+ * - Quepa a lo ALTO (todos los renglones visibles).
+ * - Quepa a lo ANCHO (que se lean al menos N caracteres del nombre más la cantidad).
  */
 public class TableroLayoutCalculator {
 
@@ -33,11 +36,41 @@ public class TableroLayoutCalculator {
         }
     }
 
-    private static final double MIN_FONT_SIZE = 16.0;
-    private static final double MAX_FONT_SIZE = 36.0;
-    private static final double ROW_HEIGHT_MULTIPLIER = 1.35; // Factor para evitar que se encimen
+    public static final double MIN_FONT_SIZE = 14.0;
+    public static final double MAX_FONT_SIZE = 40.0;
 
+    /** Alto del renglón respecto a la letra (holgura para que no se encimen). */
+    public static final double ROW_HEIGHT_MULTIPLIER = 1.40;
+    /** Alto del encabezado de categoría respecto al renglón. */
+    public static final double TITLE_HEIGHT_FACTOR = 1.15;
+
+    /** Ancho aproximado de un carácter en mayúsculas, como fracción del tamaño de letra. */
+    public static final double CHAR_WIDTH_FACTOR = 0.64;
+    /** Ancho reservado para la columna de cantidad, como múltiplo del tamaño de letra. */
+    public static final double QTY_WIDTH_FACTOR = 2.6;
+
+    /** Separación horizontal entre columnas y padding externo (deben coincidir con la vista). */
+    public static final double COLUMN_GAP = 6.0;
+    public static final double OUTER_PADDING_H = 12.0;
+    /** Bordes + paddings internos de cada renglón. */
+    public static final double ROW_INNER_PADDING = 18.0;
+
+    public static double columnWidth(double width, int columns) {
+        return (width - OUTER_PADDING_H - (columns - 1) * COLUMN_GAP) / columns;
+    }
+
+    public static double qtyWidth(double fontSize) {
+        return fontSize * QTY_WIDTH_FACTOR;
+    }
+
+    /** Compatibilidad: mínimo de 14 caracteres legibles. */
     public static LayoutResult calculate(List<Block> blocks, double width, double height, boolean allowSplit, int maxColumns) {
+        return calculate(blocks, width, height, allowSplit, maxColumns, 14);
+    }
+
+    public static LayoutResult calculate(List<Block> blocks, double width, double height,
+                                         boolean allowSplit, int maxColumns, int minCharsDescripcion) {
+        int total = countTotalItems(blocks);
         if (width <= 0 || height <= 0 || blocks.isEmpty()) {
             return new LayoutResult(1, MIN_FONT_SIZE, MIN_FONT_SIZE * ROW_HEIGHT_MULTIPLIER, 0);
         }
@@ -45,15 +78,32 @@ public class TableroLayoutCalculator {
         LayoutResult bestResult = null;
 
         for (int cols = 1; cols <= maxColumns; cols++) {
-            LayoutResult result = binarySearchFontSize(blocks, width, height, cols, allowSplit);
-            if (bestResult == null || (result.missedItems < bestResult.missedItems) || 
-                (result.missedItems == bestResult.missedItems && result.fontSize > bestResult.fontSize)) {
+            // Tamaño máximo de letra que permite leer el nombre en esta cantidad de columnas
+            double colW = columnWidth(width, cols);
+            double maxFontByWidth = (colW - ROW_INNER_PADDING)
+                    / (CHAR_WIDTH_FACTOR * minCharsDescripcion + QTY_WIDTH_FACTOR);
+
+            LayoutResult result;
+            if (maxFontByWidth < MIN_FONT_SIZE) {
+                // Con estas columnas los nombres serían ilegibles: solo se usa si nada más funciona
+                result = new LayoutResult(cols, MIN_FONT_SIZE, MIN_FONT_SIZE * ROW_HEIGHT_MULTIPLIER,
+                        total + simulateLayout(blocks, height, cols, MIN_FONT_SIZE, allowSplit) + 1);
+            } else {
+                double high = Math.min(MAX_FONT_SIZE, maxFontByWidth);
+                result = binarySearchFontSize(blocks, height, cols, allowSplit, high);
+            }
+
+            if (bestResult == null
+                    || result.missedItems < bestResult.missedItems
+                    || (result.missedItems == bestResult.missedItems && result.fontSize > bestResult.fontSize + 0.01)) {
                 bestResult = result;
             }
         }
 
-        if (bestResult == null) {
-            bestResult = new LayoutResult(1, MIN_FONT_SIZE, MIN_FONT_SIZE * ROW_HEIGHT_MULTIPLIER, countTotalItems(blocks));
+        if (bestResult.missedItems > total) {
+            // Ninguna opción era legible a lo ancho: usar 1 columna con letra mínima
+            int missed = simulateLayout(blocks, height, 1, MIN_FONT_SIZE, allowSplit);
+            bestResult = new LayoutResult(1, MIN_FONT_SIZE, MIN_FONT_SIZE * ROW_HEIGHT_MULTIPLIER, missed);
         }
 
         return bestResult;
@@ -63,41 +113,39 @@ public class TableroLayoutCalculator {
         return blocks.stream().mapToInt(b -> b.items.size()).sum();
     }
 
-    private static LayoutResult binarySearchFontSize(List<Block> blocks, double width, double height, int columns, boolean allowSplit) {
+    private static LayoutResult binarySearchFontSize(List<Block> blocks, double height, int columns,
+                                                     boolean allowSplit, double maxFont) {
         double low = MIN_FONT_SIZE;
-        double high = MAX_FONT_SIZE;
-        double bestFitFont = MIN_FONT_SIZE;
-        int minMissed = Integer.MAX_VALUE;
+        double high = maxFont;
+        double bestFitFont = -1;
 
-        // Búsqueda binaria
-        for (int i = 0; i < 15; i++) {
+        for (int i = 0; i < 18 && low <= high; i++) {
             double mid = (low + high) / 2.0;
-            int missed = simulateLayout(blocks, width, height, columns, mid, allowSplit);
-
+            int missed = simulateLayout(blocks, height, columns, mid, allowSplit);
             if (missed == 0) {
                 bestFitFont = mid;
-                minMissed = 0;
-                low = mid + 0.1; // Buscar si cabe con una más grande
+                low = mid + 0.1;
             } else {
-                if (missed < minMissed) {
-                    minMissed = missed;
-                }
-                high = mid - 0.1; // Buscar una más chica
+                high = mid - 0.1;
             }
         }
 
-        // Si con el mínimo (16px) hay elementos fuera, calcular cuántos faltan usando el mínimo
-        if (minMissed > 0) {
-            bestFitFont = MIN_FONT_SIZE;
-            minMissed = simulateLayout(blocks, width, height, columns, MIN_FONT_SIZE, allowSplit);
+        if (bestFitFont < 0) {
+            int missed = simulateLayout(blocks, height, columns, MIN_FONT_SIZE, allowSplit);
+            return new LayoutResult(columns, MIN_FONT_SIZE, MIN_FONT_SIZE * ROW_HEIGHT_MULTIPLIER, missed);
         }
 
-        return new LayoutResult(columns, bestFitFont, bestFitFont * ROW_HEIGHT_MULTIPLIER, minMissed);
+        double font = Math.floor(bestFitFont * 10) / 10.0;
+        return new LayoutResult(columns, font, font * ROW_HEIGHT_MULTIPLIER, 0);
     }
 
-    private static int simulateLayout(List<Block> blocks, double width, double height, int columns, double fontSize, boolean allowSplit) {
+    /**
+     * Simula el acomodo y regresa cuántos artículos NO cabrían.
+     * Debe reflejar exactamente la misma lógica que usa la vista al dibujar.
+     */
+    public static int simulateLayout(List<Block> blocks, double height, int columns, double fontSize, boolean allowSplit) {
         double rowHeight = fontSize * ROW_HEIGHT_MULTIPLIER;
-        double titleHeight = rowHeight * 1.1; // Título ligeramente más grande
+        double titleHeight = rowHeight * TITLE_HEIGHT_FACTOR;
 
         int currentColumn = 1;
         double currentY = 0;
@@ -109,8 +157,18 @@ public class TableroLayoutCalculator {
                 continue;
             }
 
-            // ¿Cabe el título?
-            if (currentY + titleHeight > height) {
+            if (!allowSplit) {
+                double blockTotalHeight = titleHeight + (block.items.size() * rowHeight);
+                if (currentY > 0 && currentY + blockTotalHeight > height) {
+                    currentColumn++;
+                    currentY = 0;
+                    if (currentColumn > columns) {
+                        missedItems += block.items.size();
+                        continue;
+                    }
+                }
+            } else if (currentY + titleHeight + rowHeight > height) {
+                // No dejar un encabezado "huérfano" al final de la columna
                 currentColumn++;
                 currentY = 0;
                 if (currentColumn > columns) {
@@ -118,45 +176,21 @@ public class TableroLayoutCalculator {
                     continue;
                 }
             }
-            
-            // Si no allowSplit, validar si el bloque COMPLETO cabe en la columna actual
-            if (!allowSplit) {
-                double blockTotalHeight = titleHeight + (block.items.size() * rowHeight);
-                if (currentY + blockTotalHeight > height) {
-                    currentColumn++;
-                    currentY = 0;
-                    if (currentColumn > columns) {
-                        missedItems += block.items.size();
-                        continue;
-                    }
-                    if (blockTotalHeight > height) {
-                        // El bloque ni siquiera cabe en una columna completa
-                        // Lo que no quepa se pierde
-                    }
-                }
-            }
 
             currentY += titleHeight;
-
             int itemsLeft = block.items.size();
 
             while (itemsLeft > 0) {
-                if (currentColumn > columns) {
-                    missedItems += itemsLeft;
-                    break;
-                }
-
                 if (currentY + rowHeight > height) {
-                    // No cabe más en esta columna
                     if (allowSplit) {
                         currentColumn++;
                         currentY = 0;
-                        if (currentColumn <= columns) {
-                            // Agregar título repetido
-                            currentY += titleHeight;
+                        if (currentColumn > columns) {
+                            missedItems += itemsLeft;
+                            break;
                         }
+                        currentY += titleHeight; // encabezado "(cont.)"
                     } else {
-                        // En no-split, lo que no cupo se pierde (por bloques extremadamente largos)
                         missedItems += itemsLeft;
                         break;
                     }

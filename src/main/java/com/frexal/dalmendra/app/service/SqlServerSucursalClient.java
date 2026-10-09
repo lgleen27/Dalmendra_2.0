@@ -104,6 +104,49 @@ public class SqlServerSucursalClient {
         return resultado;
     }
 
+    public com.frexal.dalmendra.app.model.EntradasDelDia consultarEntradasHoy(Sucursal sucursal) {
+        int compras = 0;
+        int movimientos = 0;
+
+        String sqlCompras = 
+            "SELECT SUM(d.cantidad) AS total " +
+            "FROM compras c " +
+            "INNER JOIN comprasdet d ON c.idcompra = d.idcompra " +
+            "WHERE CAST(c.fecha AS DATE) = CAST(GETDATE() AS DATE)";
+
+        String sqlMovimientos = 
+            "SELECT SUM(d.cantidad) AS total " +
+            "FROM invmovimientos m " +
+            "INNER JOIN invmovimientosdet d ON m.idmovimiento = d.idmovimiento " +
+            "WHERE m.tipo = 'E' AND CAST(m.fecha AS DATE) = CAST(GETDATE() AS DATE)";
+
+        try (Connection cn = openConnection(sucursal)) {
+            // Intentar consultar compras
+            try (PreparedStatement ps = cn.prepareStatement(sqlCompras);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    compras = rs.getInt("total");
+                }
+            } catch (SQLException ignore) {
+                // Silently ignore if table doesn't exist or other error to not break the rest
+            }
+
+            // Intentar consultar movimientos
+            try (PreparedStatement ps = cn.prepareStatement(sqlMovimientos);
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    movimientos = rs.getInt("total");
+                }
+            } catch (SQLException ignore) {
+                // Silently ignore
+            }
+        } catch (SQLException ignore) {
+            // Failed to connect entirely
+        }
+
+        return new com.frexal.dalmendra.app.model.EntradasDelDia(compras, movimientos);
+    }
+
     private Connection openConnection(Sucursal sucursal) throws SQLException {
         validarSucursal(sucursal);
 
