@@ -51,6 +51,14 @@
                    translateX="182"/>
 
             <HBox spacing="12" alignment="CENTER_LEFT">
+                <CheckBox fx:id="chkModoKiosco" text="Modo Kiosco (Pantalla Completa en Tablero)"/>
+            </HBox>
+
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <CheckBox fx:id="chkDividirCategorias" text="Permitir dividir categorías en columnas"/>
+            </HBox>
+
+            <HBox spacing="12" alignment="CENTER_LEFT">
                 <CheckBox fx:id="chkEditarApi"
                           text="Permitir modificar configuración de API"
                           onAction="#onToggleEditarApi"/>

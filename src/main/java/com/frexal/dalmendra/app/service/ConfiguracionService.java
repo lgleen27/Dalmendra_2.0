@@ -76,6 +76,12 @@ public class ConfiguracionService {
             case "FirstReport":
                 appState.setFirstReport(valor);
                 break;
+            case "ModoKiosco":
+                appState.setModoKiosco(valor);
+                break;
+            case "DividirCategoriasTablero":
+                appState.setDividirCategoriasTablero(valor);
+                break;
             default:
                 break;
         }

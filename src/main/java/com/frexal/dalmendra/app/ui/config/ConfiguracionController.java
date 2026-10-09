@@ -42,6 +42,12 @@ public class ConfiguracionController {
     @FXML
     private CheckBox chkEditarApi;
 
+    @FXML
+    private CheckBox chkModoKiosco;
+
+    @FXML
+    private CheckBox chkDividirCategorias;
+
     private ConfiguracionService configuracionService;
     private AppState appState;
     private Runnable onConfiguracionGuardada;
@@ -92,6 +98,13 @@ public class ConfiguracionController {
         spnSync.getValueFactory().setValue(parseEntero(appState.getTimeSyncSucursal(), 1));
         spnCambio.getValueFactory().setValue(parseEntero(appState.getTimeChangeSucursal(), 15));
 
+        if (chkModoKiosco != null) {
+            chkModoKiosco.setSelected("1".equals(appState.getModoKiosco()));
+        }
+        if (chkDividirCategorias != null) {
+            chkDividirCategorias.setSelected("1".equals(appState.getDividirCategoriasTablero()));
+        }
+
         try {
             String apiUrl = configuracionService.getValorConfiguracion("ApiUrlReporteCategorias");
             String apiToken = configuracionService.getValorConfiguracion("ApiTokenReporteCategorias");
@@ -135,6 +148,13 @@ public class ConfiguracionController {
             configuracionService.actualizarConfiguracion("FirstReport", reporte);
             configuracionService.actualizarConfiguracion("TimeSyncSucursal", String.valueOf(spnSync.getValue()));
             configuracionService.actualizarConfiguracion("TimeChangeSucursal", String.valueOf(spnCambio.getValue()));
+            
+            if (chkModoKiosco != null) {
+                configuracionService.actualizarConfiguracion("ModoKiosco", chkModoKiosco.isSelected() ? "1" : "0");
+            }
+            if (chkDividirCategorias != null) {
+                configuracionService.actualizarConfiguracion("DividirCategoriasTablero", chkDividirCategorias.isSelected() ? "1" : "0");
+            }
 
             if (chkEditarApi != null && chkEditarApi.isSelected()) {
                 String apiUrl = txtApiUrl.getText() != null ? txtApiUrl.getText().trim() : "";

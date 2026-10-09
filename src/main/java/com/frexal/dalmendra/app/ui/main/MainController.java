@@ -209,6 +209,7 @@ public class MainController {
             aplicarColorSucursalActual();
             actualizarTextoUltimaSincronizacion();
             definirTimerSync();
+            aplicarModoKiosco();
 
             if (sucursalService.haySucursalesActivas()) {
                 actualizarExistencias();
@@ -716,6 +717,7 @@ public class MainController {
             ConfiguracionController controller = loader.getController();
             controller.initData(configuracionService, appState, () -> {
                 definirTimerSync();
+                aplicarModoKiosco();
                 lblEstado.setText("Configuración actualizada");
                 lblSync.setText("Configuración guardada");
                 actualizarTextoUltimaSincronizacion();
@@ -770,17 +772,20 @@ public class MainController {
     /**
      * Crea una columna visual usada en el reporte por categorías.
      */
-    private VBox crearColumnaReporte() {
-        VBox columna = new VBox(0);
-        columna.setAlignment(Pos.TOP_LEFT);
-        columna.setFillWidth(true);
-        columna.setMaxWidth(Double.MAX_VALUE);
-        columna.setMinWidth(0);
-        columna.setPrefWidth(0);
-
-        HBox.setHgrow(columna, Priority.ALWAYS);
-
-        return columna;
+    private void aplicarModoKiosco() {
+        if (pnlCentro != null && pnlCentro.getScene() != null && pnlCentro.getScene().getWindow() instanceof Stage) {
+            Stage stage = (Stage) pnlCentro.getScene().getWindow();
+            boolean isKiosco = "1".equals(appState.getModoKiosco());
+            stage.setFullScreen(isKiosco);
+        } else {
+            javafx.application.Platform.runLater(() -> {
+                if (pnlCentro != null && pnlCentro.getScene() != null && pnlCentro.getScene().getWindow() instanceof Stage) {
+                    Stage stage = (Stage) pnlCentro.getScene().getWindow();
+                    boolean isKiosco = "1".equals(appState.getModoKiosco());
+                    stage.setFullScreen(isKiosco);
+                }
+            });
+        }
     }
 
     // ======================================================
@@ -788,266 +793,45 @@ public class MainController {
     // ======================================================
 
     /**
-     * Crea el bloque visual de una categoría con su encabezado
-     * y la lista de existencias pertenecientes a esa categoría.
+     * Construye y muestra el reporte por categorías en el panel central.
+     * Utiliza el componente dinámico TableroCategoriasView.
      */
-    private VBox crearBloqueCategoria(Categoria categoria, List<Existencia> existencias) {
-        VBox contenedor = new VBox();
-        contenedor.setSpacing(0);
-        contenedor.setAlignment(Pos.TOP_LEFT);
-        contenedor.setFillWidth(true);
-        contenedor.setMaxWidth(Double.MAX_VALUE);
+    private void cargarReportePorCategoriasEnPanel() {
+        try {
+            Sucursal sucursal = appState.getSucursalSeleccionada();
 
-        Label titulo = new Label(valor(categoria.getDescripcion()).toUpperCase());
-        titulo.setMaxWidth(Double.MAX_VALUE);
-        titulo.setMinHeight(33);
-        titulo.setPrefHeight(33);
+            if (sucursal == null || sucursal.getId() == null) {
+                setContenidoCentral(new Label("No hay sucursal seleccionada."));
+                return;
+            }
 
-        titulo.setStyle(
-                "-fx-font-size: 25px;" +
-                "-fx-font-weight: bold;" +
-                "-fx-text-fill: #2c2c2c;" +
-                "-fx-background-color: transparent;" +
-                "-fx-padding: 0 0 1 0;"
-        );
+            List<Categoria> categorias = categoriaRepository.findActivas();
+            List<Existencia> existencias = existenciaRepository.findBySucursalId(sucursal.getId());
+            aplicarStockLocal(existencias);
+            
+            com.frexal.dalmendra.app.ui.main.tablero.TableroCategoriasView tablero = new com.frexal.dalmendra.app.ui.main.tablero.TableroCategoriasView();
+            boolean permitirDividir = "1".equals(appState.getDividirCategoriasTablero());
+            
+            List<Existencia> existenciasFiltradas = new ArrayList<>();
+            for (Categoria cat : categorias) {
+                List<Existencia> registros = filtrarExistenciasPorCategoria(existencias, cat);
+                existenciasFiltradas.addAll(registros);
+            }
+            
+            if (existenciasFiltradas.isEmpty()) {
+                Label lbl = new Label("No hay existencias para mostrar en la sucursal seleccionada.");
+                lbl.setStyle("-fx-font-size: 16px; -fx-text-fill: #30505b;");
+                setContenidoCentral(lbl);
+                return;
+            }
 
-        VBox tabla = new VBox();
-        tabla.setSpacing(0);
-        tabla.setFillWidth(true);
-        tabla.setMaxWidth(Double.MAX_VALUE);
+            tablero.updateData(categorias, existenciasFiltradas, permitirDividir);
+            setContenidoCentral(tablero);
 
-        for (int i = 0; i < existencias.size(); i++) {
-            tabla.getChildren().add(
-                    crearFilaCategoria(
-                            existencias.get(i),
-                            categoria,
-                            i == existencias.size() - 1
-                    )
-            );
+        } catch (Exception ex) {
+            mostrarError("Reporte por categorías", "No se pudo cargar el reporte: " + ex.getMessage());
         }
-
-        contenedor.getChildren().addAll(titulo, tabla);
-
-        return contenedor;
     }
-    
-    /////////////////////////////////////
-    /**
-    * Crea una fila individual dentro del bloque de categoría.
-    * La descripción puede limpiarse quitando la palabra clave de la categoría.
-    */
-    private Node crearFilaCategoria(
-            Existencia existencia,
-            Categoria categoria,
-            boolean ultimaFila
-    ) {
-        GridPane fila = new GridPane();
-
-        fila.setHgap(2);
-        fila.setVgap(0);
-        fila.setAlignment(Pos.CENTER_LEFT);
-        fila.setMaxWidth(Double.MAX_VALUE);
-        fila.setMinHeight(25);
-        fila.setPrefHeight(25);
-        fila.setPadding(new Insets(0, 3, 0, 3));
-
-        fila.setStyle(
-                "-fx-border-color: #c0c0c0;" +
-                "-fx-border-width: 1 1 0 1;" +
-                "-fx-background-color: #f4f4f4;"
-        );
-
-        if (ultimaFila) {
-            fila.setStyle(
-                    "-fx-border-color: #c0c0c0;" +
-                    "-fx-border-width: 1;" +
-                    "-fx-background-color: #f4f4f4;"
-            );
-        }
-
-        Label lblDescripcion = new Label(
-                limpiarDescripcionParaCategoria(existencia, categoria)
-        );
-
-        lblDescripcion.setWrapText(false);
-        lblDescripcion.setMaxWidth(Double.MAX_VALUE);
-        lblDescripcion.setMinWidth(0);
-
-        Label lblExistencia = new Label(
-                formatearExistencia(existencia.getExistenciaOrZero())
-        );
-
-        lblExistencia.setAlignment(Pos.CENTER_RIGHT);
-        lblExistencia.setMinWidth(40);
-        lblExistencia.setPrefWidth(40);
-        lblExistencia.setMaxWidth(40);
-
-        aplicarColorStock(
-                lblDescripcion,
-                lblExistencia,
-                existencia,
-                categoria
-        );
-
-        GridPane.setHgrow(lblDescripcion, Priority.ALWAYS);
-
-        fila.add(lblDescripcion, 0, 0);
-        fila.add(lblExistencia, 1, 0);
-
-        return fila;
-    }
-
-    /**
-     * Evalúa los niveles de stock de un artículo y aplica el semáforo de color correspondiente:
-     * - Fondo rojo pastel (#ffb3b3) si la existencia es menor o igual al Stock Mínimo (Crítico).
-     * - Fondo amarillo pastel (#fff3a3) si la existencia es menor o igual al Stock Deseado (Alerta preventiva).
-     * - Sin color de fondo si el stock supera el nivel deseado o no tiene umbrales fijados.
-     *
-     * @param lblDescripcion Etiqueta visual de la descripción del insumo.
-     * @param lblExistencia Etiqueta visual del valor numérico de la existencia.
-     * @param existencia Objeto de dominio con el stock actual y umbrales.
-     * @param categoria Categoría a la que pertenece el insumo.
-     */
-    private void aplicarColorStock(Label lblDescripcion, Label lblExistencia, Existencia existencia, Categoria categoria) {
-       int existenciaActual = existencia.getExistenciaOrZero() != null
-               ? existencia.getExistenciaOrZero().intValue()
-               : 0;
-
-       Integer stockMinimo = existencia.getStockMinimo();
-       Integer stockDeseado = existencia.getStockDeseado();
-
-       String estiloDescripcion =
-               "-fx-font-size: 24px; " +
-               "-fx-font-weight: 600; " +
-               "-fx-text-fill: #222222; " +
-               "-fx-padding: 0 0 0 0;";
-       
-
-       String estiloExistencia =
-               "-fx-font-size: 23px; " +
-               "-fx-font-weight: bold; " +
-               "-fx-text-fill: #222222; " +
-               "-fx-padding: 0 0 0 0;";
-
-       if (stockMinimo == null || stockDeseado == null) {
-           lblDescripcion.setStyle(estiloDescripcion);
-           lblExistencia.setStyle(estiloExistencia);
-           return;
-       }
-
-       if (existenciaActual <= stockMinimo) {
-           lblDescripcion.setStyle(estiloDescripcion + "-fx-background-color: #ffb3b3;");
-           lblExistencia.setStyle(estiloExistencia + "-fx-background-color: #ffb3b3;");
-       } else if (existenciaActual <= stockDeseado) {
-           lblDescripcion.setStyle(estiloDescripcion + "-fx-background-color: #fff3a3;");
-           lblExistencia.setStyle(estiloExistencia + "-fx-background-color: #fff3a3;");
-       } else {
-           lblDescripcion.setStyle(estiloDescripcion);
-           lblExistencia.setStyle(estiloExistencia);
-       }
-   }
-
-   /**
-    * Construye y muestra el reporte por categorías en el panel central.
-    *
-    * Estrategia:
-    * - Respeta el orden original de las categorías.
-    * - Distribuye en 4 columnas.
-    * - Usa un máximo de celdas visibles por columna.
-    * - Cuando un bloque ya no cabe, pasa a la siguiente columna.
-    */
-   private void cargarReportePorCategoriasEnPanel() {
-       try {
-           Sucursal sucursal = appState.getSucursalSeleccionada();
-
-           if (sucursal == null || sucursal.getId() == null) {
-               setContenidoCentral(new Label("No hay sucursal seleccionada."));
-               return;
-           }
-
-           List<Categoria> categorias = categoriaRepository.findActivas();
-           List<Existencia> existencias = existenciaRepository.findBySucursalId(sucursal.getId());
-           aplicarStockLocal(existencias);
-           List<Existencia> pendientes = new ArrayList<>(existencias);
-
-           HBox layoutColumnas = new HBox(6);
-           layoutColumnas.setPadding(new Insets(3, 6, 3, 6));
-           layoutColumnas.setAlignment(Pos.TOP_LEFT);
-           layoutColumnas.setStyle("-fx-background-color: transparent;");
-
-           VBox columna1 = crearColumnaReporte();
-           VBox columna2 = crearColumnaReporte();
-           VBox columna3 = crearColumnaReporte();
-           VBox columna4 = crearColumnaReporte();
-           VBox columna5 = crearColumnaReporte();
-
-           List<VBox> columnas = List.of(columna1, columna2, columna3, columna4, columna5);
-
-           int[] cargas = new int[]{0, 0, 0, 0};
-           int maxCeldasPorColumna = 33;
-           int indiceColumnaActual = 0;
-
-           for (Categoria categoria : categorias) {
-               List<Existencia> registrosCategoria = filtrarExistenciasPorCategoria(pendientes, categoria);
-
-               if (registrosCategoria.isEmpty()) {
-                   continue;
-               }
-
-               VBox bloque = crearBloqueCategoria(categoria, registrosCategoria);
-               int celdasBloque = calcularCeldasBloque(registrosCategoria.size());
-
-               if (indiceColumnaActual < columnas.size() - 1
-                        && cargas[indiceColumnaActual] > 0
-                        && cargas[indiceColumnaActual] + celdasBloque > maxCeldasPorColumna) {
-
-                    indiceColumnaActual++;
-                }
-
-               columnas.get(indiceColumnaActual).getChildren().add(bloque);
-               cargas[indiceColumnaActual] += celdasBloque;
-
-               pendientes.removeAll(registrosCategoria);
-           }
-
-           if (columna1.getChildren().isEmpty()
-                   && columna2.getChildren().isEmpty()
-                   && columna3.getChildren().isEmpty()
-                   && columna4.getChildren().isEmpty()
-                   && columna5.getChildren().isEmpty()) {
-
-               Label lbl = new Label("No hay existencias para mostrar en la sucursal seleccionada.");
-               lbl.setStyle("-fx-font-size: 16px; -fx-text-fill: #30505b;");
-               setContenidoCentral(lbl);
-               return;
-           }
-
-           layoutColumnas.getChildren().addAll(columna1, columna2, columna3, columna4, columna5);
-
-           HBox.setHgrow(columna1, Priority.ALWAYS);
-           HBox.setHgrow(columna2, Priority.ALWAYS);
-           HBox.setHgrow(columna3, Priority.ALWAYS);
-           HBox.setHgrow(columna4, Priority.ALWAYS);
-           HBox.setHgrow(columna5, Priority.ALWAYS);
-
-           ScrollPane scrollPane = crearContenedorScrollable(layoutColumnas);
-           setContenidoCentral(scrollPane);
-
-       } catch (Exception ex) {
-           mostrarError("Reporte por categorías", "No se pudo cargar el reporte: " + ex.getMessage());
-       }
-   }
-   
-   /**
-    * Calcula cuántas celdas visuales ocupa un bloque.
-    *
-    * Regla:
-    * - 1 celda para el título.
-    * - 1 celda por cada fila de existencia.
-    */
-   private int calcularCeldasBloque(int cantidadFilas) {
-       return 1 + cantidadFilas;
-   }
    
    /**
     * Formatea la existencia numérica para presentarla en pantalla.

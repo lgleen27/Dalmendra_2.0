@@ -45,6 +45,8 @@ public class AppState {
     private String timeSyncSucursal = "1";
     private String timeChangeSucursal = "15";
     private String firstReport = "PorCategorias";
+    private String modoKiosco = "0";
+    private String dividirCategoriasTablero = "0";
 
     public String getNombrePrograma() {
         return nombrePrograma;
@@ -244,6 +246,22 @@ public class AppState {
         this.firstReport = firstReport;
     }
 
+    public String getModoKiosco() {
+        return modoKiosco;
+    }
+
+    public void setModoKiosco(String modoKiosco) {
+        this.modoKiosco = modoKiosco;
+    }
+
+    public String getDividirCategoriasTablero() {
+        return dividirCategoriasTablero;
+    }
+
+    public void setDividirCategoriasTablero(String dividirCategoriasTablero) {
+        this.dividirCategoriasTablero = dividirCategoriasTablero;
+    }
+
     public Optional<Configuracion> getConfiguracion(String descripcion) {
         switch (descripcion) {
             case "IdDbSelect":
@@ -254,6 +272,10 @@ public class AppState {
                 return Optional.of(new Configuracion("TimeChangeSucursal", timeChangeSucursal));
             case "FirstReport":
                 return Optional.of(new Configuracion("FirstReport", firstReport));
+            case "ModoKiosco":
+                return Optional.of(new Configuracion("ModoKiosco", modoKiosco));
+            case "DividirCategoriasTablero":
+                return Optional.of(new Configuracion("DividirCategoriasTablero", dividirCategoriasTablero));
             default:
                 return Optional.empty();
         }
