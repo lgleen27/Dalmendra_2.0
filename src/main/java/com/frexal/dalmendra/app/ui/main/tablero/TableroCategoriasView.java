@@ -45,8 +45,8 @@ public class TableroCategoriasView extends StackPane {
     private static final int MIN_CHARS_LEGIBLES = 8;
     private static final int MAX_CHARS_OBJETIVO = 16;
 
-    /** Margen vertical total (padding externo + bordes de tabla). */
-    private static final double MARGEN_VERTICAL = 10.0;
+    /** Margen vertical total (padding externo + holgura contra barra de estado + bordes). */
+    private static final double MARGEN_VERTICAL = 22.0;
 
     private static final int MAX_COLUMNAS = 6;
 
@@ -100,14 +100,17 @@ public class TableroCategoriasView extends StackPane {
     }
 
     private void actualizarEtiquetaEntradas() {
-        if (entradasDelDia != null && entradasDelDia.getTotal() > 0) {
+        if (entradasDelDia != null) {
             entradasLabel.setText(String.format("Entradas hoy:\nCompras: %d\nMovimientos: %d\nTOTAL: %d",
                     entradasDelDia.getCompras(),
                     entradasDelDia.getMovimientos(),
                     entradasDelDia.getTotal()));
             entradasLabel.setVisible(true);
+            entradasLabel.setManaged(true);
         } else {
+            entradasLabel.setText("");
             entradasLabel.setVisible(false);
+            entradasLabel.setManaged(false);
         }
     }
 
@@ -194,7 +197,7 @@ public class TableroCategoriasView extends StackPane {
 
             HBox columnsContainer = new HBox(TableroLayoutCalculator.COLUMN_GAP);
             columnsContainer.setPadding(new Insets(4, TableroLayoutCalculator.OUTER_PADDING_H / 2,
-                    4, TableroLayoutCalculator.OUTER_PADDING_H / 2));
+                    10, TableroLayoutCalculator.OUTER_PADDING_H / 2));
             columnsContainer.setAlignment(Pos.TOP_LEFT);
             columnsContainer.setFillHeight(false);
             columnsContainer.setMinSize(0, 0);

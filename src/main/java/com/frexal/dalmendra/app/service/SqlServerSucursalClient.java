@@ -9,7 +9,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Cliente JDBC especializado en la comunicación con instancias remotas de Microsoft SQL Server
@@ -109,40 +111,47 @@ public class SqlServerSucursalClient {
         int movimientos = 0;
 
         String sqlCompras = 
-            "SELECT SUM(d.cantidad) AS total " +
-            "FROM compras c " +
-            "INNER JOIN comprasdet d ON c.idcompra = d.idcompra " +
-            "WHERE CAST(c.fecha AS DATE) = CAST(GETDATE() AS DATE)";
+            "SELECT COALESCE(SUM(cantidad), 0) AS total " +
+            "FROM movsinv " +
+            "WHERE movto = 0 " +
+            "  AND idcompra > 0 " +
+            "  AND idalmacen = 3 " +
+            "  AND CAST(fecha AS DATE) = CAST(GETDATE() AS DATE)";
 
         String sqlMovimientos = 
-            "SELECT SUM(d.cantidad) AS total " +
-            "FROM invmovimientos m " +
-            "INNER JOIN invmovimientosdet d ON m.idmovimiento = d.idmovimiento " +
-            "WHERE m.tipo = 'E' AND CAST(m.fecha AS DATE) = CAST(GETDATE() AS DATE)";
+            "SELECT COALESCE(SUM(cantidad), 0) AS total " +
+            "FROM movsinv " +
+            "WHERE movto = 0 " +
+            "  AND (idcompra IS NULL OR idcompra = 0) " +
+            "  AND idalmacen = 3 " +
+            "  AND CAST(fecha AS DATE) = CAST(GETDATE() AS DATE)";
 
         try (Connection cn = openConnection(sucursal)) {
-            // Intentar consultar compras
+            // 1. Consultar entradas provenientes de compras del día
             try (PreparedStatement ps = cn.prepareStatement(sqlCompras);
                  ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     compras = rs.getInt("total");
                 }
-            } catch (SQLException ignore) {
-                // Silently ignore if table doesn't exist or other error to not break the rest
+            } catch (SQLException ex) {
+                System.out.println("[ENTRADAS] Error en compras (" + sucursal.getNombreSucursal() + "): " + ex.getMessage());
             }
 
-            // Intentar consultar movimientos
+            // 2. Consultar entradas directas/manuales de inventario del día
             try (PreparedStatement ps = cn.prepareStatement(sqlMovimientos);
                  ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     movimientos = rs.getInt("total");
                 }
-            } catch (SQLException ignore) {
-                // Silently ignore
+            } catch (SQLException ex) {
+                System.out.println("[ENTRADAS] Error en movimientos (" + sucursal.getNombreSucursal() + "): " + ex.getMessage());
             }
-        } catch (SQLException ignore) {
-            // Failed to connect entirely
+        } catch (SQLException ex) {
+            System.out.println("[ENTRADAS] Error al conectar para entradas (" + sucursal.getNombreSucursal() + "): " + ex.getMessage());
         }
+
+        System.out.println("[ENTRADAS] Total calculado hoy para " + sucursal.getNombreSucursal() 
+                + " (Almacén 3) -> Compras: " + compras + ", Movimientos: " + movimientos + ", Total: " + (compras + movimientos));
 
         return new com.frexal.dalmendra.app.model.EntradasDelDia(compras, movimientos);
     }

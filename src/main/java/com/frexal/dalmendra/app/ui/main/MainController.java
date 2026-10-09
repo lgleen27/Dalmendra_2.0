@@ -137,6 +137,14 @@ public class MainController {
     private volatile boolean sincronizando = false;
 
     /**
+     * FEATURE FLAG: Activa o desactiva el módulo de Entradas del Día (Compras y Movimientos).
+     * - false: Desactivado. No consulta SQL Server en segundo plano y no muestra la etiqueta en el tablero.
+     * - true: Activado. Consulta SQL Server cada minuto e inyecta el desglose en el tablero y en el JSON.
+     * Cambiar a true cuando la clienta autorice este módulo.
+     */
+    private static final boolean MODULO_ENTRADAS_HABILITADO = true;
+
+    /**
      * Servicios principales usados por la ventana.
      */
     private final ConfiguracionService configuracionService =
@@ -495,23 +503,26 @@ public class MainController {
             try {
                 inventarioSyncService.sincronizarTodas();
 
-                // NUEVO PROCESO AISLADO: Sincronizar reporte de entradas para todas las sucursales.
+                // PROCESO AISLADO: Sincronizar reporte de entradas para todas las sucursales.
                 // Protegido en su propio try-catch para jamás afectar el sync principal.
-                try {
-                    SqlServerSucursalClient sqlClient = new SqlServerSucursalClient();
-                    for (Sucursal sucursal : appState.getSucursalesActivas()) {
-                        if (sucursal != null && sucursal.getId() != null) {
-                            try {
-                                com.frexal.dalmendra.app.model.EntradasDelDia entradas = sqlClient.consultarEntradasHoy(sucursal);
-                                appState.getEntradasPorSucursal().put(sucursal.getId(), entradas);
-                                // Mantener actualizacion de la seleccionada para la UI actual
-                                if (appState.getSucursalSeleccionada() != null && appState.getSucursalSeleccionada().getId().equals(sucursal.getId())) {
-                                    appState.setEntradasDelDia(entradas);
-                                }
-                            } catch (Exception ignoreInner) {}
+                // Solo se ejecuta si el módulo está habilitado en código.
+                if (MODULO_ENTRADAS_HABILITADO) {
+                    try {
+                        SqlServerSucursalClient sqlClient = new SqlServerSucursalClient();
+                        for (Sucursal sucursal : appState.getSucursalesActivas()) {
+                            if (sucursal != null && sucursal.getId() != null) {
+                                try {
+                                    com.frexal.dalmendra.app.model.EntradasDelDia entradas = sqlClient.consultarEntradasHoy(sucursal);
+                                    appState.getEntradasPorSucursal().put(sucursal.getId(), entradas);
+                                    // Mantener actualizacion de la seleccionada para la UI actual
+                                    if (appState.getSucursalSeleccionada() != null && appState.getSucursalSeleccionada().getId().equals(sucursal.getId())) {
+                                        appState.setEntradasDelDia(entradas);
+                                    }
+                                } catch (Exception ignoreInner) {}
+                            }
                         }
+                    } catch (Exception ignore) {
                     }
-                } catch (Exception ignore) {
                 }
 
                 Platform.runLater(() -> {
@@ -844,7 +855,11 @@ public class MainController {
                 return;
             }
 
-            tablero.setEntradasDelDia(appState.getEntradasDelDia());
+            if (MODULO_ENTRADAS_HABILITADO) {
+                tablero.setEntradasDelDia(appState.getEntradasDelDia());
+            } else {
+                tablero.setEntradasDelDia(null);
+            }
             tablero.updateData(categorias, existenciasFiltradas, permitirDividir);
             setContenidoCentral(tablero);
 
@@ -1269,8 +1284,9 @@ public class MainController {
 
             ReporteCategoriasJsonDto reporte = dataService.construirReporteCompleto();
             
-            // Inyectar entradas del dia
-            if (reporte != null && reporte.getSucursales() != null) {
+            // Inyectar entradas del dia solo si el módulo está habilitado en código.
+            // Si está en false, los campos quedan en null y Jackson los omite completamente del JSON.
+            if (MODULO_ENTRADAS_HABILITADO && reporte != null && reporte.getSucursales() != null) {
                 for (com.frexal.dalmendra.app.dto.reporte.SucursalReporteJsonDto dto : reporte.getSucursales()) {
                     com.frexal.dalmendra.app.model.EntradasDelDia entradas = appState.getEntradasPorSucursal().get(dto.getSucursalId());
                     if (entradas != null) {
