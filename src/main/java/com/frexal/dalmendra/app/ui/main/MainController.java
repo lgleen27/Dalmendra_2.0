@@ -142,7 +142,7 @@ public class MainController {
      * - true: Activado. Consulta SQL Server cada minuto e inyecta el desglose en el tablero y en el JSON.
      * Cambiar a true cuando la clienta autorice este módulo.
      */
-    private static final boolean MODULO_ENTRADAS_HABILITADO = true;
+    private static final boolean MODULO_ENTRADAS_HABILITADO = false;
 
     /**
      * Servicios principales usados por la ventana.
