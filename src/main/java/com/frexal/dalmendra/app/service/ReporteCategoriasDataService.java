@@ -37,6 +37,7 @@ public class ReporteCategoriasDataService {
     private final CategoriaRepository categoriaRepository;
     private final ExistenciaRepository existenciaRepository;
     private final ExistenciaStockRepository existenciaStockRepository;
+    private AppState appState;
 
     public ReporteCategoriasDataService(SucursalRepository sucursalRepository,
                                         CategoriaRepository categoriaRepository,
@@ -46,6 +47,15 @@ public class ReporteCategoriasDataService {
         this.categoriaRepository = categoriaRepository;
         this.existenciaRepository = existenciaRepository;
         this.existenciaStockRepository = existenciaStockRepository;
+    }
+
+    public ReporteCategoriasDataService(SucursalRepository sucursalRepository,
+                                        CategoriaRepository categoriaRepository,
+                                        ExistenciaRepository existenciaRepository,
+                                        ExistenciaStockRepository existenciaStockRepository,
+                                        AppState appState) {
+        this(sucursalRepository, categoriaRepository, existenciaRepository, existenciaStockRepository);
+        this.appState = appState;
     }
 
     /**
@@ -181,6 +191,14 @@ public class ReporteCategoriasDataService {
 
         String palabraClave = normalizarTexto(categoria.getPalabraClave());
         String descripcion = normalizarTexto(existencia.getDescripcion());
+        String codigo = normalizarTexto(existencia.getCodigo());
+        String prefijoOmitir = normalizarTexto(appState != null ? appState.getPrefijoOmitirInsumos() : "");
+
+        if (!prefijoOmitir.isEmpty()) {
+            if (descripcion.startsWith(prefijoOmitir) || codigo.startsWith(prefijoOmitir)) {
+                return false;
+            }
+        }
 
         if (palabraClave.isEmpty() || descripcion.isEmpty()) {
             return false;

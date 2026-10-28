@@ -1,6 +1,9 @@
 package com.frexal.dalmendra.app.service;
 
+import com.frexal.dalmendra.app.model.AuditoriaEntradaItem;
 import com.frexal.dalmendra.app.model.Sucursal;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 
 import java.math.BigDecimal;
 import java.sql.Connection;
@@ -107,41 +110,62 @@ public class SqlServerSucursalClient {
     }
 
     public com.frexal.dalmendra.app.model.EntradasDelDia consultarEntradasHoy(Sucursal sucursal) {
+        return consultarEntradasHoy(sucursal, null);
+    }
+
+    public com.frexal.dalmendra.app.model.EntradasDelDia consultarEntradasHoy(Sucursal sucursal, String prefijoOmitir) {
         int compras = 0;
         int movimientos = 0;
 
+        boolean filtrarPrefijo = prefijoOmitir != null && !prefijoOmitir.trim().isEmpty();
+        String filtroLike = filtrarPrefijo ? prefijoOmitir.trim() + "%" : "";
+
         String sqlCompras = 
-            "SELECT COALESCE(SUM(cantidad), 0) AS total " +
-            "FROM movsinv " +
-            "WHERE movto = 0 " +
-            "  AND idcompra > 0 " +
-            "  AND idalmacen = 3 " +
-            "  AND CAST(fecha AS DATE) = CAST(GETDATE() AS DATE)";
+            "SELECT COALESCE(SUM(m.cantidad), 0) AS total " +
+            "FROM movsinv m " +
+            (filtrarPrefijo ? "LEFT JOIN insumos i ON m.idinsumo = i.idinsumo " : "") +
+            "WHERE m.movto = 0 " +
+            "  AND m.idcompra > 0 " +
+            "  AND m.idalmacen = 3 " +
+            (filtrarPrefijo ? "  AND (i.descripcion IS NULL OR (NOT (i.descripcion LIKE ? OR m.idinsumo LIKE ?))) " : "") +
+            "  AND CAST(m.fecha AS DATE) = CAST(GETDATE() AS DATE)";
 
         String sqlMovimientos = 
-            "SELECT COALESCE(SUM(cantidad), 0) AS total " +
-            "FROM movsinv " +
-            "WHERE movto = 0 " +
-            "  AND (idcompra IS NULL OR idcompra = 0) " +
-            "  AND idalmacen = 3 " +
-            "  AND CAST(fecha AS DATE) = CAST(GETDATE() AS DATE)";
+            "SELECT COALESCE(SUM(m.cantidad), 0) AS total " +
+            "FROM movsinv m " +
+            (filtrarPrefijo ? "LEFT JOIN insumos i ON m.idinsumo = i.idinsumo " : "") +
+            "WHERE (m.idcompra IS NULL OR m.idcompra = 0) " +
+            "  AND m.idalmacen = 3 " +
+            "  AND (m.idconcepto IS NULL OR m.idconcepto <> 'SPV') " +
+            (filtrarPrefijo ? "  AND (i.descripcion IS NULL OR (NOT (i.descripcion LIKE ? OR m.idinsumo LIKE ?))) " : "") +
+            "  AND CAST(m.fecha AS DATE) = CAST(GETDATE() AS DATE)";
 
         try (Connection cn = openConnection(sucursal)) {
             // 1. Consultar entradas provenientes de compras del día
-            try (PreparedStatement ps = cn.prepareStatement(sqlCompras);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    compras = rs.getInt("total");
+            try (PreparedStatement ps = cn.prepareStatement(sqlCompras)) {
+                if (filtrarPrefijo) {
+                    ps.setString(1, filtroLike);
+                    ps.setString(2, filtroLike);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        compras = rs.getInt("total");
+                    }
                 }
             } catch (SQLException ex) {
                 System.out.println("[ENTRADAS] Error en compras (" + sucursal.getNombreSucursal() + "): " + ex.getMessage());
             }
 
             // 2. Consultar entradas directas/manuales de inventario del día
-            try (PreparedStatement ps = cn.prepareStatement(sqlMovimientos);
-                 ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    movimientos = rs.getInt("total");
+            try (PreparedStatement ps = cn.prepareStatement(sqlMovimientos)) {
+                if (filtrarPrefijo) {
+                    ps.setString(1, filtroLike);
+                    ps.setString(2, filtroLike);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) {
+                        movimientos = rs.getInt("total");
+                    }
                 }
             } catch (SQLException ex) {
                 System.out.println("[ENTRADAS] Error en movimientos (" + sucursal.getNombreSucursal() + "): " + ex.getMessage());
@@ -154,6 +178,92 @@ public class SqlServerSucursalClient {
                 + " (Almacén 3) -> Compras: " + compras + ", Movimientos: " + movimientos + ", Total: " + (compras + movimientos));
 
         return new com.frexal.dalmendra.app.model.EntradasDelDia(compras, movimientos);
+    }
+
+    /**
+     * Consulta el detalle individual de cada artículo ingresado hoy en movsinv
+     * para todas las entradas y movimientos (excluyendo SPV), abarcando todos los almacenes para auditoría.
+     */
+    public List<AuditoriaEntradaItem> consultarDetalleEntradasHoy(Sucursal sucursal) {
+        return consultarDetalleEntradasHoy(sucursal, null);
+    }
+
+    public List<AuditoriaEntradaItem> consultarDetalleEntradasHoy(Sucursal sucursal, String prefijoOmitir) {
+        List<AuditoriaEntradaItem> resultado = new ArrayList<>();
+
+        boolean filtrarPrefijo = prefijoOmitir != null && !prefijoOmitir.trim().isEmpty();
+        String filtroLike = filtrarPrefijo ? prefijoOmitir.trim() + "%" : "";
+
+        String sql =
+                "SELECT m.fecha, " +
+                "       m.idinsumo AS codigo, " +
+                "       COALESCE(i.descripcion, '') AS descripcion, " +
+                "       m.cantidad, " +
+                "       m.idalmacen, " +
+                "       m.idcompra, " +
+                "       m.movto, " +
+                "       m.traspaso, " +
+                "       m.idconcepto " +
+                "FROM movsinv m " +
+                "LEFT JOIN insumos i ON m.idinsumo = i.idinsumo " +
+                "WHERE (m.idconcepto IS NULL OR m.idconcepto <> 'SPV') " +
+                (filtrarPrefijo ? "  AND (i.descripcion IS NULL OR (NOT (i.descripcion LIKE ? OR m.idinsumo LIKE ?))) " : "") +
+                "  AND CAST(m.fecha AS DATE) = CAST(GETDATE() AS DATE) " +
+                "ORDER BY m.fecha DESC";
+
+        SimpleDateFormat sdfHora = new SimpleDateFormat("HH:mm:ss");
+
+        try (Connection cn = openConnection(sucursal);
+             PreparedStatement ps = cn.prepareStatement(sql)) {
+            if (filtrarPrefijo) {
+                ps.setString(1, filtroLike);
+                ps.setString(2, filtroLike);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Timestamp ts = rs.getTimestamp("fecha");
+                    String hora = ts != null ? sdfHora.format(ts) : "--:--:--";
+                    String codigo = rs.getString("codigo");
+                    String descripcion = rs.getString("descripcion");
+                    BigDecimal cantidad = rs.getBigDecimal("cantidad");
+                    int idAlmacen = rs.getInt("idalmacen");
+                    long idCompra = rs.getLong("idcompra");
+                    long traspaso = rs.getLong("traspaso");
+
+                    boolean esProduccion = (idAlmacen == 3);
+                    String nombreAlmacen = esProduccion ? "Almacén 3 (Producción)" : "Almacén " + idAlmacen + " (Otro)";
+
+                    String origen;
+                    if (idCompra > 0) {
+                        origen = "Compra #" + idCompra;
+                    } else if (traspaso > 0) {
+                        origen = "Traspaso #" + traspaso;
+                    } else {
+                        if (cantidad != null && cantidad.compareTo(BigDecimal.ZERO) < 0) {
+                            origen = "Ajuste / Merma (-)";
+                        } else {
+                            origen = "Ajuste / Alta Manual (+)";
+                        }
+                    }
+
+                    resultado.add(new AuditoriaEntradaItem(
+                            hora,
+                            codigo,
+                            descripcion,
+                            cantidad != null ? cantidad : BigDecimal.ZERO,
+                            idAlmacen,
+                            nombreAlmacen,
+                            esProduccion,
+                            origen,
+                            idCompra
+                    ));
+                }
+            }
+        } catch (SQLException ex) {
+            System.out.println("[AUDITORIA] Error al consultar detalle de entradas (" + sucursal.getNombreSucursal() + "): " + ex.getMessage());
+        }
+
+        return resultado;
     }
 
     private Connection openConnection(Sucursal sucursal) throws SQLException {

@@ -82,6 +82,9 @@ public class ConfiguracionService {
             case "DividirCategoriasTablero":
                 appState.setDividirCategoriasTablero(valor);
                 break;
+            case "PrefijoOmitirInsumos":
+                appState.setPrefijoOmitirInsumos(valor);
+                break;
             default:
                 break;
         }

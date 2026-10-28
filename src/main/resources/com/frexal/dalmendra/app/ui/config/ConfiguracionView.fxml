@@ -15,40 +15,46 @@
 <BorderPane xmlns="http://javafx.com/javafx/13"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.frexal.dalmendra.app.ui.config.ConfiguracionController"
-            prefWidth="620"
-            prefHeight="380"
+            prefWidth="640"
+            prefHeight="430"
             style="-fx-background-color: white;">
 
     <center>
-        <VBox spacing="16" alignment="CENTER_LEFT">
+        <VBox spacing="14" alignment="CENTER_LEFT">
             <padding>
-                <Insets top="24" right="24" bottom="24" left="24"/>
+                <Insets top="20" right="24" bottom="20" left="24"/>
             </padding>
 
             <HBox spacing="12" alignment="CENTER_LEFT">
-                <Label minWidth="170" text="Reporte al iniciar:" />
+                <Label minWidth="180" text="Reporte al iniciar:" />
                 <ComboBox fx:id="cmbReporte" prefWidth="220"/>
             </HBox>
 
             <HBox spacing="12" alignment="CENTER_LEFT">
-                <Label minWidth="170" text="Intervalo de sincronización:" />
+                <Label minWidth="180" text="Intervalo de sincronización:" />
                 <Spinner fx:id="spnSync" prefWidth="90"/>
                 <Label text="Minutos"/>
             </HBox>
 
             <Label text="El 0 inactiva esta función."
                    style="-fx-text-fill: #a00000; -fx-font-size: 11px;"
-                   translateX="182"/>
+                   translateX="192"/>
 
             <HBox spacing="12" alignment="CENTER_LEFT">
-                <Label minWidth="170" text="Cambio de sucursal:" />
+                <Label minWidth="180" text="Cambio de sucursal:" />
                 <Spinner fx:id="spnCambio" prefWidth="90"/>
                 <Label text="Minutos"/>
             </HBox>
 
             <Label text="El 0 inactiva esta función."
                    style="-fx-text-fill: #a00000; -fx-font-size: 11px;"
-                   translateX="182"/>
+                   translateX="192"/>
+
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label minWidth="180" text="Omitir artículos con prefijo:" />
+                <TextField fx:id="txtPrefijoOmitir" prefWidth="140" promptText="Ej. MIS." />
+                <Label text="(Opcional, ej: MIS.)" style="-fx-text-fill: #78909c; -fx-font-size: 11px;" />
+            </HBox>
 
             <HBox spacing="12" alignment="CENTER_LEFT">
                 <CheckBox fx:id="chkModoKiosco" text="Modo Kiosco (Pantalla Completa en Tablero)"/>
@@ -65,12 +71,12 @@
             </HBox>
 
             <HBox spacing="12" alignment="CENTER_LEFT">
-                <Label minWidth="170" text="URL API reporte:" />
+                <Label minWidth="180" text="URL API reporte:" />
                 <TextField fx:id="txtApiUrl" prefWidth="360" disable="true"/>
             </HBox>
 
             <HBox spacing="12" alignment="CENTER_LEFT">
-                <Label minWidth="170" text="Token API:" />
+                <Label minWidth="180" text="Token API:" />
                 <PasswordField fx:id="txtApiToken" prefWidth="360" disable="true"/>
             </HBox>
         </VBox>

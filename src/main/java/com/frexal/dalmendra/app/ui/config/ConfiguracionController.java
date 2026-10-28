@@ -48,6 +48,9 @@ public class ConfiguracionController {
     @FXML
     private CheckBox chkDividirCategorias;
 
+    @FXML
+    private TextField txtPrefijoOmitir;
+
     private ConfiguracionService configuracionService;
     private AppState appState;
     private Runnable onConfiguracionGuardada;
@@ -104,6 +107,9 @@ public class ConfiguracionController {
         if (chkDividirCategorias != null) {
             chkDividirCategorias.setSelected("1".equals(appState.getDividirCategoriasTablero()));
         }
+        if (txtPrefijoOmitir != null) {
+            txtPrefijoOmitir.setText(appState.getPrefijoOmitirInsumos());
+        }
 
         try {
             String apiUrl = configuracionService.getValorConfiguracion("ApiUrlReporteCategorias");
@@ -154,6 +160,10 @@ public class ConfiguracionController {
             }
             if (chkDividirCategorias != null) {
                 configuracionService.actualizarConfiguracion("DividirCategoriasTablero", chkDividirCategorias.isSelected() ? "1" : "0");
+            }
+            if (txtPrefijoOmitir != null) {
+                String pref = txtPrefijoOmitir.getText() != null ? txtPrefijoOmitir.getText().trim() : "";
+                configuracionService.actualizarConfiguracion("PrefijoOmitirInsumos", pref);
             }
 
             if (chkEditarApi != null && chkEditarApi.isSelected()) {

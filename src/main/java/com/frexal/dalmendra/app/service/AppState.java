@@ -48,6 +48,7 @@ public class AppState {
     private String firstReport = "PorCategorias";
     private String modoKiosco = "0";
     private String dividirCategoriasTablero = "0";
+    private String prefijoOmitirInsumos = "";
     
     private EntradasDelDia entradasDelDia = new EntradasDelDia(0, 0);
     private java.util.Map<Long, EntradasDelDia> entradasPorSucursal = new java.util.HashMap<>();
@@ -278,6 +279,14 @@ public class AppState {
         this.dividirCategoriasTablero = dividirCategoriasTablero;
     }
 
+    public String getPrefijoOmitirInsumos() {
+        return prefijoOmitirInsumos != null ? prefijoOmitirInsumos : "";
+    }
+
+    public void setPrefijoOmitirInsumos(String prefijoOmitirInsumos) {
+        this.prefijoOmitirInsumos = prefijoOmitirInsumos != null ? prefijoOmitirInsumos : "";
+    }
+
     public Optional<Configuracion> getConfiguracion(String descripcion) {
         switch (descripcion) {
             case "IdDbSelect":
@@ -292,6 +301,8 @@ public class AppState {
                 return Optional.of(new Configuracion("ModoKiosco", modoKiosco));
             case "DividirCategoriasTablero":
                 return Optional.of(new Configuracion("DividirCategoriasTablero", dividirCategoriasTablero));
+            case "PrefijoOmitirInsumos":
+                return Optional.of(new Configuracion("PrefijoOmitirInsumos", prefijoOmitirInsumos));
             default:
                 return Optional.empty();
         }

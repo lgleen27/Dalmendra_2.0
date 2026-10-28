@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/13"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.frexal.dalmendra.app.ui.entradas.AuditoriaEntradasController"
+      spacing="12"
+      prefWidth="960"
+      prefHeight="580"
+      style="-fx-background-color: #f7f9fa;">
+
+    <padding>
+        <Insets top="16" right="16" bottom="16" left="16" />
+    </padding>
+
+    <!-- Encabezado con selector de sucursal -->
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <VBox spacing="2">
+            <Label text="Auditoría de Entradas del Día"
+                   style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #30505b;" />
+            <Label fx:id="lblSubtitulo"
+                   text="Cargando detalles de inventario..."
+                   style="-fx-font-size: 13px; -fx-text-fill: #5c7078;" />
+        </VBox>
+        <Region HBox.hgrow="ALWAYS" />
+        <VBox alignment="CENTER_RIGHT" spacing="4">
+            <HBox alignment="CENTER_RIGHT" spacing="8">
+                <Label text="Sucursal:" style="-fx-font-weight: bold; -fx-text-fill: #30505b; -fx-font-size: 13px;" />
+                <ComboBox fx:id="cmbSucursales" prefWidth="180" onAction="#onCambiarSucursal" />
+            </HBox>
+            <Label fx:id="lblFecha"
+                   text="Fecha: Hoy"
+                   style="-fx-font-size: 12px; -fx-text-fill: #78909c;" />
+        </VBox>
+    </HBox>
+
+    <!-- Tabla central de auditoría -->
+    <TableView fx:id="tblEntradas" VBox.vgrow="ALWAYS" style="-fx-font-size: 13px;">
+        <columns>
+            <TableColumn fx:id="colHora" text="Hora" prefWidth="85" style="-fx-alignment: CENTER;" />
+            <TableColumn fx:id="colCodigo" text="Código" prefWidth="95" style="-fx-alignment: CENTER;" />
+            <TableColumn fx:id="colDescripcion" text="Insumo / Descripción" prefWidth="280" />
+            <TableColumn fx:id="colCantidad" text="Cantidad" prefWidth="90" style="-fx-alignment: CENTER_RIGHT;" />
+            <TableColumn fx:id="colAlmacen" text="Almacén Destino" prefWidth="175" />
+            <TableColumn fx:id="colOrigen" text="Origen / Folio" prefWidth="180" />
+        </columns>
+        <placeholder>
+            <Label text="No se registraron movimientos o entradas el día de hoy en esta sucursal."
+                   style="-fx-font-size: 14px; -fx-text-fill: #78909c;" />
+        </placeholder>
+    </TableView>
+
+    <!-- Barra de totales y acciones -->
+    <HBox alignment="CENTER_LEFT" spacing="12">
+        <!-- Tarjeta Compras -->
+        <VBox style="-fx-background-color: #e8f5e9; -fx-border-color: #c8e6c9; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14;">
+            <Label text="Compras (Entradas)" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #2e7d32;" />
+            <Label fx:id="lblTotalCompras" text="0 pzas" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #2e7d32;" />
+        </VBox>
+
+        <!-- Tarjeta Movimientos / Ajustes -->
+        <VBox style="-fx-background-color: #f1f8e9; -fx-border-color: #dcedc8; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14;">
+            <Label text="Movimientos (Ajustes)" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #558b2f;" />
+            <Label fx:id="lblTotalMovimientos" text="0 pzas" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #558b2f;" />
+        </VBox>
+
+        <!-- Tarjeta Otros Almacenes -->
+        <VBox style="-fx-background-color: #fff3e0; -fx-border-color: #ffe0b2; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14;">
+            <Label text="Otros Almacenes" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #e65100;" />
+            <Label fx:id="lblTotalOtros" text="0 pzas" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #e65100;" />
+        </VBox>
+
+        <!-- Tarjeta Gran Total -->
+        <VBox style="-fx-background-color: #e3f2fd; -fx-border-color: #bbdefb; -fx-border-width: 1.5; -fx-border-radius: 6; -fx-background-radius: 6; -fx-padding: 6 14;">
+            <Label text="Gran Total Sucursal" style="-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #1565c0;" />
+            <Label fx:id="lblGranTotal" text="0 pzas" style="-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1565c0;" />
+        </VBox>
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <Button text="Actualizar" onAction="#onActualizar"
+                style="-fx-background-color: #30505b; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-background-radius: 4; -fx-cursor: hand;" />
+        <Button text="Cerrar" onAction="#onCerrar"
+                style="-fx-background-color: #cfd8dc; -fx-text-fill: #37474f; -fx-font-weight: bold; -fx-padding: 8 16; -fx-background-radius: 4; -fx-cursor: hand;" />
+    </HBox>
+
+</VBox>

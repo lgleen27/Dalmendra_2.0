@@ -19,6 +19,7 @@ module com.frexal.dalmendra.MainLauncher {
     opens com.frexal.dalmendra.app.ui.categorias to javafx.fxml;
     opens com.frexal.dalmendra.app.ui.sucursales to javafx.fxml;
     opens com.frexal.dalmendra.app.ui.existencias to javafx.fxml;
+    opens com.frexal.dalmendra.app.ui.entradas to javafx.fxml;
     opens com.frexal.dalmendra.app.dto.reporte to com.fasterxml.jackson.databind;
     
     exports com.frexal.dalmendra.app;

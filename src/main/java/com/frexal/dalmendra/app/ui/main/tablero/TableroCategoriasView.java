@@ -101,7 +101,7 @@ public class TableroCategoriasView extends StackPane {
 
     private void actualizarEtiquetaEntradas() {
         if (entradasDelDia != null) {
-            entradasLabel.setText(String.format("Entradas hoy:\nCompras: %d\nMovimientos: %d\nTOTAL: %d",
+            entradasLabel.setText(String.format("Entradas: %d\nMovimientos: %d\nTotal: %d",
                     entradasDelDia.getCompras(),
                     entradasDelDia.getMovimientos(),
                     entradasDelDia.getTotal()));

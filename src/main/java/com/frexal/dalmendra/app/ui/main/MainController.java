@@ -24,6 +24,7 @@ import com.frexal.dalmendra.app.ui.existencias.ExistenciasController;
 import com.frexal.dalmendra.app.ui.sucursales.SucursalesController;
 import com.frexal.dalmendra.app.dto.reporte.ReporteCategoriasJsonDto;
 import com.frexal.dalmendra.app.service.ReporteCategoriasApiClient;
+import com.frexal.dalmendra.app.ui.entradas.AuditoriaEntradasController;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
@@ -142,7 +143,7 @@ public class MainController {
      * - true: Activado. Consulta SQL Server cada minuto e inyecta el desglose en el tablero y en el JSON.
      * Cambiar a true cuando la clienta autorice este módulo.
      */
-    private static final boolean MODULO_ENTRADAS_HABILITADO = false;
+    private static final boolean MODULO_ENTRADAS_HABILITADO = true;
 
     /**
      * Servicios principales usados por la ventana.
@@ -457,6 +458,42 @@ public class MainController {
      * Muestra la tabla triple ocultando la columna de código para una vista más limpia.
      */
     @FXML
+    private void onAuditoriaEntradas() {
+        try {
+            Sucursal sucursal = appState.getSucursalSeleccionada();
+            if (sucursal == null) {
+                mostrarInformacion("Auditoría de Entradas", "No hay ninguna sucursal seleccionada actualmente.");
+                return;
+            }
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/frexal/dalmendra/app/ui/entradas/AuditoriaEntradasView.fxml"));
+            Parent view = loader.load();
+
+            AuditoriaEntradasController controller = loader.getController();
+            controller.initData(sucursal, appState.getSucursalesActivas(), new SqlServerSucursalClient(), appState);
+
+            Stage stage = new Stage();
+            stage.setTitle("Auditoría de Entradas del Día - " + sucursal.getNombreSucursal());
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(lblEstado.getScene().getWindow());
+            stage.setScene(new Scene(view));
+            stage.sizeToScene();
+            stage.centerOnScreen();
+
+            configurarPausaSincronizacionEnVentana(stage);
+
+            stage.showAndWait();
+
+        } catch (Exception ex) {
+            mostrarError("Error", "No se pudo abrir la auditoría de entradas: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Manejador de evento al pulsar el botón de "Listado sin Código".
+     * Muestra la tabla triple ocultando la columna de código para una vista más limpia.
+     */
+    @FXML
     private void onListadoSinCodigo() {
         if (sucursalService.haySucursalesActivas()) {
             abrirVistaListadoSinCodigo();
@@ -512,7 +549,7 @@ public class MainController {
                         for (Sucursal sucursal : appState.getSucursalesActivas()) {
                             if (sucursal != null && sucursal.getId() != null) {
                                 try {
-                                    com.frexal.dalmendra.app.model.EntradasDelDia entradas = sqlClient.consultarEntradasHoy(sucursal);
+                                    com.frexal.dalmendra.app.model.EntradasDelDia entradas = sqlClient.consultarEntradasHoy(sucursal, appState.getPrefijoOmitirInsumos());
                                     appState.getEntradasPorSucursal().put(sucursal.getId(), entradas);
                                     // Mantener actualizacion de la seleccionada para la UI actual
                                     if (appState.getSucursalSeleccionada() != null && appState.getSucursalSeleccionada().getId().equals(sucursal.getId())) {
@@ -751,6 +788,9 @@ public class MainController {
                 lblEstado.setText("Configuración actualizada");
                 lblSync.setText("Configuración guardada");
                 actualizarTextoUltimaSincronizacion();
+                try {
+                    cargarReportePorCategoriasEnPanel();
+                } catch (Exception ignored) {}
             });
 
             Stage stage = new Stage();
@@ -856,7 +896,11 @@ public class MainController {
             }
 
             if (MODULO_ENTRADAS_HABILITADO) {
-                tablero.setEntradasDelDia(appState.getEntradasDelDia());
+                com.frexal.dalmendra.app.model.EntradasDelDia entradasSucursal = null;
+                if (sucursal.getId() != null) {
+                    entradasSucursal = appState.getEntradasPorSucursal().get(sucursal.getId());
+                }
+                tablero.setEntradasDelDia(entradasSucursal != null ? entradasSucursal : appState.getEntradasDelDia());
             } else {
                 tablero.setEntradasDelDia(null);
             }
@@ -890,7 +934,16 @@ public class MainController {
             return false;
         }
 
+        String prefijoOmitir = normalizarTexto(appState != null ? appState.getPrefijoOmitirInsumos() : "");
         String descripcion = normalizarTexto(existencia.getDescripcion());
+        String codigo = normalizarTexto(existencia.getCodigo());
+
+        if (!prefijoOmitir.isEmpty()) {
+            if (descripcion.startsWith(prefijoOmitir) || codigo.startsWith(prefijoOmitir)) {
+                return false;
+            }
+        }
+
         return descripcion.startsWith(palabraClave);
     }
 
@@ -1279,7 +1332,8 @@ public class MainController {
                     sucursalRepository,
                     categoriaRepository,
                     existenciaRepository,
-                    existenciaStockRepository
+                    existenciaStockRepository,
+                    appState
             );
 
             ReporteCategoriasJsonDto reporte = dataService.construirReporteCompleto();

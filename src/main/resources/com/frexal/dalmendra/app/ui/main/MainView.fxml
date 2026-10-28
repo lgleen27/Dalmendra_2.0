@@ -25,6 +25,8 @@
                         <MenuItem text="Por Categorias" onAction="#onReportePorCategorias"/>
                         <MenuItem text="Listado con Codigo" onAction="#onListadoConCodigo"/>
                         <MenuItem text="Listado sin Codigo" onAction="#onListadoSinCodigo"/>
+                        <SeparatorMenuItem />
+                        <MenuItem text="Auditoría de Entradas..." onAction="#onAuditoriaEntradas"/>
                     </items>
                 </Menu>
 
